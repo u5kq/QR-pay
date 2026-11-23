@@ -119,6 +119,31 @@ button.danger{background:#fff;color:#a33;border:1px solid #eadada}
 footer{color:#999;padding:24px}
 @media(min-width:600px){main{padding-top:28px}section{padding:22px}}
 
+/* POS terminal refinement */
+body{background:#eef0f2;color:#18202a}
+header{background:#17212b;color:#fff;padding:17px 22px;border-bottom:3px solid #2d3b49}
+header p{color:#b9c4ce}
+main{max-width:1240px;padding:18px 18px 110px}
+section{border:1px solid #d9dee4;border-radius:10px;box-shadow:0 2px 7px rgba(20,30,40,.045);padding:18px}
+.metric{background:#f5f7f9;border:1px solid #e2e6eb}
+button{border-radius:7px;min-height:44px}
+button:not(.secondary):not(.danger){background:#245b85}
+button.secondary{background:#f2f4f6;border:1px solid #cbd3db;color:#263747}
+input{border-radius:7px;border:1px solid #c6ced6}
+#productList{grid-template-columns:repeat(auto-fill,minmax(155px,1fr))}
+.product{border-radius:8px}
+.product button{width:100%}
+#cartList{max-height:340px;overflow:auto}
+.status{background:#eaf1f7;color:#294d6b}
+@media(min-width:900px){
+ main{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(330px,.75fr);gap:14px;align-items:start}
+ main>section{margin:0}
+ main>section:nth-child(1),main>section:nth-child(2){grid-column:1/-1}
+ main>section:nth-child(3),main>section:nth-child(4),main>section:nth-child(5){grid-column:1}
+ main>section:nth-child(6){grid-column:2;grid-row:3 / span 3;position:sticky;top:14px}
+ main>section:nth-child(n+7){grid-column:1/-1}
+}
+@media(max-width:899px){main{padding:12px 12px 100px}section{padding:15px}}
 </style>
 </head>
 <body>
@@ -176,6 +201,7 @@ footer{color:#999;padding:24px}
 
 <section>
   <h2>商品一覧</h2>
+  <input id="productFilter" placeholder="商品名・バーコードで検索" oninput="renderProducts()">
   <div id="productList" class="grid"></div>
 </section>
 
@@ -298,7 +324,8 @@ function total(){
 function renderProducts(){
  const area=document.getElementById("productList");
  area.innerHTML="";
- products.forEach(product=>{
+ const filter=(document.getElementById("productFilter")?.value||"").trim().toLowerCase();
+ products.filter(p=>!filter||String(p.name).toLowerCase().includes(filter)||String(p.barcode||"").toLowerCase().includes(filter)).forEach(product=>{
   const card=document.createElement("div");
   card.className="product";
   const name=document.createElement("strong");
