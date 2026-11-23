@@ -399,7 +399,8 @@ function showHistory() {
     "'": "&#39;"
   })[char]);
 
-  const total = history.reduce(
+  const activeHistory = history.filter(item => item.status !== "cancelled");
+  const total = activeHistory.reduce(
     (sum, item) => sum + Number(item.amount || 0),
     0
   );
@@ -410,7 +411,7 @@ function showHistory() {
     <div class="panel">
       <p>累計利用額</p>
       <h2>¥${total.toLocaleString("ja-JP")}</h2>
-      <p>取引件数：${history.length}件</p>
+      <p>有効な取引件数：${history.filter(item => item.status !== "cancelled").length}件</p>
     </div>
 
     ${
