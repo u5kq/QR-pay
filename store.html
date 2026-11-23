@@ -7,6 +7,7 @@
 <meta name="theme-color" content="#ffffff">
 <title>QR PAY STORE</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#f3f3f3;color:#111;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
@@ -121,12 +122,28 @@ footer{color:#999;padding:24px}
 </section>
 
 <section>
+  <h2>店舗・レシート設定</h2>
+  <label>店舗名</label><input id="receiptStoreName" placeholder="例：DEMO STORE">
+  <label>住所</label><input id="receiptAddress" placeholder="例：神奈川県川崎市 ...">
+  <label>電話番号</label><input id="receiptPhone" placeholder="例：044-000-0000">
+  <label>ロゴ画像URL（任意）</label><input id="receiptLogo" type="url" placeholder="https://example.com/logo.png">
+  <button onclick="saveReceiptSettings()">店舗情報を保存</button>
+  <p class="muted">公開画像URLのロゴを設定できます。個人情報や自宅住所は入力しないでください。</p>
+</section>
+<section>
   <h2>商品登録</h2>
-  <label>商品名</label>
-  <input id="productName" placeholder="例：ジュース">
-  <label>価格（円）</label>
-  <input id="productPrice" type="number" min="1" max="100000" placeholder="例：150">
+  <label>商品名</label><input id="productName" placeholder="例：ジュース">
+  <label>価格（円）</label><input id="productPrice" type="number" min="1" max="100000" placeholder="例：150">
+  <label>バーコード番号（任意）</label><input id="productBarcode" inputmode="numeric" placeholder="JANコードなど">
   <button onclick="addProduct()">商品を登録</button>
+</section>
+<section>
+  <h2>バーコード読み取り</h2>
+  <div class="row"><input id="barcodeSearch" inputmode="numeric" placeholder="バーコード番号を入力"><button onclick="lookupBarcode()">商品を検索</button></div>
+  <div id="barcode-reader" style="width:100%;max-width:480px;margin:10px auto"></div>
+  <div class="row"><button onclick="startBarcodeScanner()">カメラで読み取る</button><button class="secondary" onclick="stopBarcodeScanner()">読み取り停止</button></div>
+  <p class="muted">カメラ利用には許可が必要です。読み取れない場合は番号を手入力できます。</p>
+  <div id="barcodeMessage" class="muted" aria-live="polite"></div>
 </section>
 
 <section>
@@ -185,8 +202,11 @@ footer{color:#999;padding:24px}
 const KEYS={
  products:"qrpay_store_products",
  cart:"qrpay_store_cart",
- issued:"qrpay_store_issued"
+ issued:"qrpay_store_issued",
+ settings:"qrpay_store_receipt_settings"
 };
+let receiptSettings=load(KEYS.settings,{name:"DEMO STORE",address:"",phone:"",logo:""});
+let barcodeScanner=null;
 
 const defaults=[
  {id:"p1",name:"コーヒー",price:350},
@@ -255,6 +275,12 @@ function renderProducts(){
   const price=document.createElement("div");
   price.className="price";
   price.textContent=yen(product.price);
+  if(product.barcode){
+   const code=document.createElement("div");
+   code.className="muted";
+   code.textContent="バーコード："+product.barcode;
+   card.appendChild(code);
+  }
   const add=document.createElement("button");
   add.textContent="カートに追加";
   add.onclick=()=>addToCart(product.id);
@@ -271,13 +297,18 @@ function renderProducts(){
 function addProduct(){
  const name=document.getElementById("productName").value.trim();
  const price=Number(document.getElementById("productPrice").value);
+ const barcode=document.getElementById("productBarcode").value.trim();
  if(!name||!Number.isInteger(price)||price<1||price>100000){
   alert("商品名と1〜100,000円の整数価格を入力してください。");
   return;
  }
- products.push({id:crypto.randomUUID(),name,price});
+ if(barcode && products.some(p=>String(p.barcode||"")===barcode)){
+  alert("このバーコード番号はすでに登録されています。");return;
+ }
+ products.push({id:crypto.randomUUID(),name,price,barcode});
  document.getElementById("productName").value="";
  document.getElementById("productPrice").value="";
+ document.getElementById("productBarcode").value="";
  save();renderAll();
 }
 
@@ -428,8 +459,16 @@ function renderReceipt(record){
   area.appendChild(node);
   return node;
  };
+ if(receiptSettings.logo){
+  const logo=document.createElement("img");
+  logo.src=receiptSettings.logo;logo.alt="店舗ロゴ";
+  logo.style.cssText="display:block;max-width:110px;max-height:70px;object-fit:contain;margin:0 auto 8px";
+  logo.onerror=()=>logo.remove();area.appendChild(logo);
+ }
  addText("h2","QR PAY","receipt-center");
- addText("div","DEMO STORE","receipt-center");
+ addText("div",receiptSettings.name||"DEMO STORE","receipt-center");
+ if(receiptSettings.address)addText("div",receiptSettings.address,"receipt-center");
+ if(receiptSettings.phone)addText("div","TEL："+receiptSettings.phone,"receipt-center");
  addText("div","デモ取引発行控え","receipt-center");
  addText("div","※実際の決済完了・領収証ではありません","receipt-center");
  addText("div","", "receipt-line");
@@ -516,11 +555,47 @@ function renderDashboard(){
  document.getElementById("issuedCount").textContent=active.length;
 }
 
+function saveReceiptSettings(){
+ receiptSettings={
+  name:document.getElementById("receiptStoreName").value.trim()||"DEMO STORE",
+  address:document.getElementById("receiptAddress").value.trim(),
+  phone:document.getElementById("receiptPhone").value.trim(),
+  logo:document.getElementById("receiptLogo").value.trim()
+ };
+ localStorage.setItem(KEYS.settings,JSON.stringify(receiptSettings));
+ alert("店舗・レシート情報を保存しました。");
+}
+function loadReceiptSettingsUI(){
+ document.getElementById("receiptStoreName").value=receiptSettings.name||"DEMO STORE";
+ document.getElementById("receiptAddress").value=receiptSettings.address||"";
+ document.getElementById("receiptPhone").value=receiptSettings.phone||"";
+ document.getElementById("receiptLogo").value=receiptSettings.logo||"";
+}
+function lookupBarcode(code){
+ const value=(code||document.getElementById("barcodeSearch").value).trim();
+ const product=products.find(p=>String(p.barcode||"")===value);
+ const message=document.getElementById("barcodeMessage");
+ if(!product){message.textContent="商品が見つかりません。バーコード番号を商品登録してください。";return;}
+ addToCart(product.id);
+ document.getElementById("barcodeSearch").value="";
+ message.textContent=product.name+" をカートに追加しました。";
+}
+async function startBarcodeScanner(){
+ if(typeof Html5Qrcode==="undefined"){document.getElementById("barcodeMessage").textContent="スキャナーを読み込めません。番号を手入力してください。";return;}
+ try{
+  if(!barcodeScanner)barcodeScanner=new Html5Qrcode("barcode-reader");
+  const formats=[Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.EAN_8,Html5QrcodeSupportedFormats.UPC_A,Html5QrcodeSupportedFormats.UPC_E,Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.CODE_39,Html5QrcodeSupportedFormats.ITF];
+  await barcodeScanner.start({facingMode:"environment"},{fps:10,qrbox:{width:280,height:120},formatsToSupport:formats},decoded=>{
+   document.getElementById("barcodeSearch").value=decoded;lookupBarcode(decoded);stopBarcodeScanner();
+  },()=>{});
+  document.getElementById("barcodeMessage").textContent="バーコードをカメラに映してください。";
+ }catch(e){document.getElementById("barcodeMessage").textContent="カメラを開始できません。許可設定または手入力を確認してください。";}
+}
+async function stopBarcodeScanner(){
+ if(barcodeScanner){try{if(barcodeScanner.isScanning)await barcodeScanner.stop();}catch(e){}}
+}
 function renderAll(){
- renderProducts();
- renderCart();
- renderHistory();
- renderDashboard();
+ renderProducts();renderCart();renderHistory();renderDashboard();
 }
 
 function exportData(){
@@ -542,6 +617,7 @@ function resetDemo(){
  save();renderAll();closeQR();
 }
 
+loadReceiptSettingsUI();
 renderAll();
 </script>
 </body>
