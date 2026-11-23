@@ -426,6 +426,13 @@ body.self-kiosk-active #selfKiosk{display:flex;flex-direction:column}
 #selfKiosk #selfKioskReader__dashboard_section_csr button,#selfKiosk #selfKioskPayReader__dashboard_section_csr button{min-height:40px;border-radius:10px}
 @media(max-width:760px){#selfKiosk .kiosk-camera{min-height:220px;padding:6px}#selfKiosk #selfKioskReader video,#selfKiosk #selfKioskPayReader video{max-height:300px!important}}
 
+/* V3.7 payment method selector */
+#selfKiosk .kiosk-method-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0}
+#selfKiosk .kiosk-method{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-height:104px;padding:15px;border:1px solid #ddd;border-radius:14px;background:#fff;color:#111;font-size:23px}
+#selfKiosk .kiosk-method strong{font-size:15px}.kiosk-method small{font-size:11px;color:#777}
+#selfKiosk .kiosk-method.active{border:2px solid #111;background:#f3f3f1}
+#selfKiosk [hidden]{display:none!important}
+@media(max-width:760px){#selfKiosk .kiosk-method-grid{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
@@ -1291,11 +1298,11 @@ renderAll();
   <div class="kiosk-body">
    <section class="kiosk-screen active" id="kioskWelcome"><div class="kiosk-card kiosk-start-grid"><div><div class="kiosk-eyebrow">WELCOME</div><h1>セルフレジへ<br>ようこそ。</h1><p class="kiosk-lead">商品のバーコードをスキャンして、お会計へお進みください。</p><button class="kiosk-primary" id="kioskStart" type="button">お買い物を始める　→</button><p class="kiosk-scan-hint">この端末はデモ用です。実際の決済は行われません。</p></div><div><div class="kiosk-pay-mark">▥</div><h2>かんたんセルフチェックアウト</h2><p class="kiosk-lead">① 商品をスキャン<br>② 商品と合計を確認<br>③ 支払いバーコードをスキャン</p></div></div></section>
    <section class="kiosk-screen" id="kioskProducts"><div class="kiosk-steps"><span class="active">1 商品スキャン</span><span>2 お会計</span><span>3 完了</span></div><div class="kiosk-card"><div class="kiosk-eyebrow">SCAN ITEMS</div><h1>商品をスキャン</h1><p class="kiosk-lead">商品のバーコードをカメラにかざしてください。</p><div class="kiosk-scan-layout"><div><div class="kiosk-camera" id="selfKioskReader"></div><p class="kiosk-scan-hint">バーコードを枠内に映してください。読み取ると商品が自動で追加されます。</p><div class="kiosk-scan-status" id="kioskScanStatus" aria-live="polite">カメラを準備しています。</div><div style="display:flex;gap:8px;margin-top:12px"><input class="kiosk-input" id="kioskManualBarcode" placeholder="バーコード番号を入力" inputmode="numeric"><button class="kiosk-secondary" id="kioskManualAdd" type="button">追加</button></div></div><div><h2>スキャンした商品</h2><div class="kiosk-order-list" id="kioskProductRows"></div><div class="kiosk-total"><span>合計（税込）</span><strong id="kioskProductTotal">¥0</strong></div><button class="kiosk-primary" id="kioskToPay" type="button">お会計へ進む　→</button><button class="kiosk-secondary" style="width:100%;margin-top:9px" id="kioskBackWelcome" type="button">スタート画面へ戻る</button></div></div></div></section>
-   <section class="kiosk-screen" id="kioskPayment"><div class="kiosk-steps"><span>1 商品スキャン</span><span class="active">2 お会計</span><span>3 完了</span></div><div class="kiosk-card kiosk-scan-layout"><div><div class="kiosk-eyebrow">BARCODE PAYMENT</div><h1>お支払い</h1><p class="kiosk-lead">QR PAYアプリの「バーコードで支払う」を開き、表示されたバーコードをスキャンしてください。</p><div class="kiosk-camera" id="selfKioskPayReader"></div><div class="kiosk-scan-status" id="kioskPayStatus" aria-live="polite">支払いバーコードをお待ちしています。</div></div><div><div class="kiosk-eyebrow">ORDER SUMMARY</div><h2>ご注文内容</h2><div class="kiosk-order-list" id="kioskPayRows"></div><div class="kiosk-total"><span>お支払い合計</span><strong id="kioskPayTotal">¥0</strong></div><p class="kiosk-scan-hint">支払いバーコードは有効期限内のものを読み取ってください。</p><button class="kiosk-secondary" id="kioskBackItems" type="button" style="width:100%">商品画面へ戻る</button></div></div></section>
+   <section class="kiosk-screen" id="kioskPayment"><div class="kiosk-steps"><span>1 商品スキャン</span><span class="active">2 お会計</span><span>3 完了</span></div><div class="kiosk-card kiosk-scan-layout"><div><div class="kiosk-eyebrow">PAYMENT METHOD</div><h1>お支払い方法</h1><p class="kiosk-lead">ご希望のお支払い方法を選択してください。</p><div class="kiosk-method-grid" id="kioskPaymentMethods"><button type="button" data-method="qr" class="kiosk-method active">▦<strong>QR PAY</strong><small>バーコード決済</small></button><button type="button" data-method="cash" class="kiosk-method">¥<strong>現金</strong><small>現金デモ会計</small></button><button type="button" data-method="card" class="kiosk-method">▭<strong>クレジットカード</strong><small>カード決済デモ</small></button><button type="button" data-method="ic" class="kiosk-method">◎<strong>電子マネー</strong><small>交通系IC等のデモ</small></button></div><div id="kioskQrPayment"><p class="kiosk-lead">QR PAYアプリの「バーコードで支払う」を開き、表示されたバーコードをスキャンしてください。</p><div class="kiosk-camera" id="selfKioskPayReader"></div><div class="kiosk-scan-status" id="kioskPayStatus" aria-live="polite">支払いバーコードをお待ちしています。</div></div><div id="kioskCashPayment" hidden><label for="kioskCashTendered">お預かり金額（任意）</label><input class="kiosk-input" id="kioskCashTendered" type="number" min="0" step="1" placeholder="お預かり金額"><p class="kiosk-scan-status" id="kioskCashChange">おつり：—</p><button class="kiosk-primary" id="kioskConfirmCash" type="button">現金のデモ会計を確定</button></div><div id="kioskOtherPayment" hidden><p class="kiosk-scan-status">選択した支払い方法でデモ会計を記録します。実際のカード・電子マネー処理は行いません。</p><button class="kiosk-primary" id="kioskConfirmOther" type="button">この方法でデモ会計を確定</button></div></div><div><div class="kiosk-eyebrow">ORDER SUMMARY</div><h2>ご注文内容</h2><div class="kiosk-order-list" id="kioskPayRows"></div><div class="kiosk-total"><span>お支払い合計</span><strong id="kioskPayTotal">¥0</strong></div><p class="kiosk-scan-hint">お支払い方法を選んでから、画面の案内に従ってください。</p><button class="kiosk-secondary" id="kioskBackItems" type="button" style="width:100%">商品画面へ戻る</button></div></div></section>
    <section class="kiosk-screen" id="kioskComplete"><div class="kiosk-card kiosk-success"><div class="kiosk-pay-mark">✓</div><div class="kiosk-eyebrow">PAYMENT COMPLETE</div><h1>お支払いが<br>完了しました</h1><p class="kiosk-lead">ご利用ありがとうございました。</p><h2 id="kioskCompleteAmount">¥0</h2><p id="kioskCompleteId" class="kiosk-lead"></p><span class="kiosk-demo-stamp">DEMO TRANSACTION / NOT A REAL PAYMENT</span><div class="kiosk-success-actions"><button class="kiosk-secondary" id="kioskPrintReceipt" type="button">レシートを印刷</button><button class="kiosk-primary" id="kioskNewCustomer" type="button" style="margin:0">次のお客様　→</button></div></div></section>
   </div>`;
  document.body.appendChild(root);
- let scanner=null,stage="welcome",lastCode="",lastAt=0,lastRecord=null;
+ let scanner=null,stage="welcome",lastCode="",lastAt=0,lastRecord=null,paymentMethod="qr";
  const money=n=>"¥"+Number(n||0).toLocaleString("ja-JP");
  function screen(id){root.querySelectorAll(".kiosk-screen").forEach(x=>x.classList.toggle("active",x.id===id));}
  function message(id,text){const el=document.getElementById(id);if(el)el.textContent=text;}
@@ -1358,17 +1365,30 @@ renderAll();
  }
  function toPayment(){
   if(!cart.length){message("kioskScanStatus","先に商品をスキャンしてください。");return;}
-  stop();stage="payment";updateSummary();screen("kioskPayment");startCamera("selfKioskPayReader","payment");
+  stop();stage="payment";paymentMethod="qr";updateSummary();screen("kioskPayment");selectPaymentMethod("qr");
+ }
+ function selectPaymentMethod(method){
+  paymentMethod=method;root.querySelectorAll("[data-method]").forEach(b=>b.classList.toggle("active",b.dataset.method===method));
+  const qr=document.getElementById("kioskQrPayment"),cash=document.getElementById("kioskCashPayment"),other=document.getElementById("kioskOtherPayment");
+  qr.hidden=method!=="qr";cash.hidden=method!=="cash";other.hidden=!["card","ic"].includes(method);
+  if(method==="qr")startCamera("selfKioskPayReader","payment");else stop();
  }
  function completePayment(raw){
-  const parts=String(raw).split("|"),token=parts[1],expires=Number(parts[2]);
-  const used=load("qrpay_store_used_customer_codes",[]);
-  if(parts[0]!=="QPB1"||!token||!Number.isFinite(expires)){message("kioskPayStatus","バーコード形式が正しくありません。");startCamera("selfKioskPayReader","payment");return;}
-  if(Date.now()>expires){message("kioskPayStatus","バーコードの有効期限が切れています。アプリで再表示してください。");startCamera("selfKioskPayReader","payment");return;}
-  if(used.includes(token)){message("kioskPayStatus","このバーコードは使用済みです。新しいバーコードを表示してください。");startCamera("selfKioskPayReader","payment");return;}
   const amount=total();if(!amount||amount>100000){message("kioskPayStatus","合計金額を確認してください。");return;}
-  localStorage.setItem("qrpay_store_used_customer_codes",JSON.stringify([...used,token].slice(-500)));
-  const record={requestId:"BARCODE-"+token.slice(0,12),amount,store:receiptSettings.name||"DEMO STORE",date:new Date().toISOString(),status:"barcode-demo",paymentMethod:"バーコード（デモ記録）",items:cart.map(item=>({id:item.id,name:item.name,price:item.price,qty:item.qty}))};
+  const used=load("qrpay_store_used_customer_codes",[]);let token="",requestId="",methodLabel="";
+  if(paymentMethod==="qr"){
+   const parts=String(raw||"").split("|");token=parts[1];const expires=Number(parts[2]);
+   if(parts[0]!=="QPB1"||!token||!Number.isFinite(expires)){message("kioskPayStatus","バーコード形式が正しくありません。");startCamera("selfKioskPayReader","payment");return;}
+   if(Date.now()>expires){message("kioskPayStatus","バーコードの有効期限が切れています。アプリで再表示してください。");startCamera("selfKioskPayReader","payment");return;}
+   if(used.includes(token)){message("kioskPayStatus","このバーコードは使用済みです。新しいバーコードを表示してください。");startCamera("selfKioskPayReader","payment");return;}
+   localStorage.setItem("qrpay_store_used_customer_codes",JSON.stringify([...used,token].slice(-500)));
+   requestId="BARCODE-"+token.slice(0,12);methodLabel="QR PAY（デモ記録）";
+  }else if(paymentMethod==="cash"){
+   const tendered=Number(document.getElementById("kioskCashTendered")?.value||0);
+   if(tendered>0&&tendered<amount){message("kioskCashChange","お預かり金額が不足しています。");return;}
+   requestId="CASH-"+crypto.randomUUID();methodLabel="現金（デモ記録）";
+  }else{requestId=paymentMethod.toUpperCase()+"-"+crypto.randomUUID();methodLabel=paymentMethod==="card"?"クレジットカード（デモ記録）":"電子マネー（デモ記録）";}
+  const record={requestId,amount,store:receiptSettings.name||"DEMO STORE",date:new Date().toISOString(),status:paymentMethod+"-demo",paymentMethod:methodLabel,items:cart.map(item=>({id:item.id,name:item.name,price:item.price,qty:item.qty}))};
   applyDemoInventory(record);issued.unshift(record);lastRecord=record;cart=[];save();renderAll();renderReceipt(record);
   document.getElementById("receiptSection").classList.remove("hidden");
   document.getElementById("kioskCompleteAmount").textContent=money(amount);
@@ -1377,6 +1397,10 @@ renderAll();
  }
  document.getElementById("kioskStart").onclick=startSession;
  document.getElementById("kioskToPay").onclick=toPayment;
+ root.querySelectorAll("[data-method]").forEach(b=>b.addEventListener("click",()=>selectPaymentMethod(b.dataset.method)));
+ document.getElementById("kioskConfirmCash").onclick=()=>{stop();completePayment(null);};
+ document.getElementById("kioskConfirmOther").onclick=()=>{stop();completePayment(null);};
+ document.getElementById("kioskCashTendered").addEventListener("input",()=>{const paid=Number(document.getElementById("kioskCashTendered").value||0),amount=total();document.getElementById("kioskCashChange").textContent=paid>=amount&&paid>0?"おつり："+money(paid-amount):"おつり：—";});
  document.getElementById("kioskBackWelcome").onclick=()=>{stop();cart=[];save();renderAll();enter("welcome");};
  document.getElementById("kioskBackItems").onclick=async()=>{await stop();stage="items";screen("kioskProducts");startCamera("selfKioskReader","items");};
  document.getElementById("kioskManualAdd").onclick=()=>{const input=document.getElementById("kioskManualBarcode"),code=input.value.trim(),p=products.find(x=>String(x.barcode||"").trim()===code);if(!p){message("kioskScanStatus","商品が見つかりません。バーコードを確認してください。");return;}addToCart(p.id);input.value="";updateSummary();message("kioskScanStatus","追加しました："+p.name);};
