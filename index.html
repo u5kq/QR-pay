@@ -285,6 +285,7 @@ function confirmDemoPayment() {
 
   window.pendingDemoPayment = null;
 }
+
 function showHistory() {
   const history = JSON.parse(
     localStorage.getItem(historyKey) || "[]"
@@ -292,26 +293,50 @@ function showHistory() {
 
   const content = document.getElementById("content");
 
-  if (history.length === 0) {
-    content.innerHTML = `
-      <h2>取引履歴</h2>
-      <p class="note">取引履歴はまだありません。</p>
-    `;
-    return;
-  }
+  const escapeHTML = (value) => String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+
+  const total = history.reduce(
+    (sum, item) => sum + Number(item.amount || 0),
+    0
+  );
 
   content.innerHTML = `
     <h2>取引履歴</h2>
-    ${history.map(item => `
-      <div class="panel">
-        <h3>${item.store}</h3>
-        <p>決済金額：¥${Number(item.amount).toLocaleString("ja-JP")}</p>
-        <p>${item.date}</p>
-        <p>デモ決済完了</p>
-      </div>
-    `).join("")}
+
+    <div class="panel">
+      <p>累計利用額</p>
+      <h2>¥${total.toLocaleString("ja-JP")}</h2>
+      <p>取引件数：${history.length}件</p>
+    </div>
+
+    ${
+      history.length === 0
+        ? `<p class="note">取引履歴はまだありません。</p>`
+        : history.map((item, index) => `
+          <details class="panel">
+            <summary>
+              <strong>${escapeHTML(item.store)}</strong>
+              <h3>−¥${Number(item.amount).toLocaleString("ja-JP")}</h3>
+              <small>${escapeHTML(item.date)}</small>
+            </summary>
+            <hr>
+            <p>店舗：${escapeHTML(item.store)}</p>
+            <p>決済金額：¥${Number(item.amount).toLocaleString("ja-JP")}</p>
+            <p>決済日時：${escapeHTML(item.date)}</p>
+            <p>状態：デモ決済完了</p>
+            <p>取引番号：${escapeHTML(item.requestId)}</p>
+          </details>
+        `).join("")
+    }
   `;
 }
+
 </script>
 
 </body>
