@@ -294,7 +294,45 @@ function confirmDemoPayment() {
 
   window.pendingDemoPayment = null;
 }
+function showHome() {
+  const history = JSON.parse(
+    localStorage.getItem(historyKey) || "[]"
+  );
 
+  const now = new Date();
+
+  const thisMonth = history.filter(item => {
+    const date = new Date(item.date);
+    return (
+      !isNaN(date.getTime()) &&
+      date.getFullYear() === now.getFullYear() &&
+      date.getMonth() === now.getMonth()
+    );
+  });
+
+  const total = thisMonth.reduce(
+    (sum, item) => sum + Number(item.amount || 0),
+    0
+  );
+
+  document.getElementById("monthlyTotal").textContent =
+    "¥" + total.toLocaleString("ja-JP");
+
+  document.getElementById("monthlyCount").textContent =
+    "決済 " + thisMonth.length + "件";
+
+  const recent = document.getElementById("recentHistory");
+
+  recent.innerHTML = history.length === 0
+    ? '<p class="note">取引履歴はまだありません。</p>'
+    : history.slice(0, 3).map(item => `
+        <div class="panel">
+          <strong>${String(item.store).replace(/[&<>"']/g, "")}</strong>
+          <h3>−¥${Number(item.amount).toLocaleString("ja-JP")}</h3>
+          <small>${String(item.date).replace(/[&<>"']/g, "")}</small>
+        </div>
+      `).join("");
+}
 function showHistory() {
   const history = JSON.parse(
     localStorage.getItem(historyKey) || "[]"
