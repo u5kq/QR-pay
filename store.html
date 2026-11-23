@@ -1425,6 +1425,61 @@ renderAll();
    <section class="kiosk-screen" id="kioskComplete"><div class="kiosk-card kiosk-success"><div class="kiosk-pay-mark">✓</div><div class="kiosk-eyebrow">DEMO CHECKOUT COMPLETE</div><h1>デモ会計を<br>記録しました</h1><p class="kiosk-lead">ご利用ありがとうございました。</p><h2 id="kioskCompleteAmount">¥0</h2><p id="kioskCompleteId" class="kiosk-lead"></p><span class="kiosk-demo-stamp">DEMO ONLY / REAL PAYMENT NOT PROCESSED</span><div class="kiosk-success-actions"><button class="kiosk-secondary" id="kioskPrintReceipt" type="button">レシートを印刷</button><button class="kiosk-primary" id="kioskNewCustomer" type="button" style="margin:0">次のお客様　→</button></div></div></section>
   </div>`;
  document.body.appendChild(root);
+ // V5.5 REAL KIOSK DESIGN: store header, register identity, service footer and clear customer-facing hierarchy.
+ const kioskChrome=document.createElement("div");kioskChrome.id="kioskStoreChrome";
+ kioskChrome.innerHTML='<div class="kiosk-store-identity"><span class="kiosk-store-symbol">Q</span><div><strong id="kioskStoreName"></strong><small>セルフサービスレジ　/　SELF CHECKOUT</small></div></div><div class="kiosk-register-meta"><span><i></i> 稼働中</span><b>SELF REGISTER 01</b><small>DEMO TERMINAL</small></div>';
+ root.querySelector(".kiosk-top")?.insertAdjacentElement("afterend",kioskChrome);
+ const kioskFooter=document.createElement("div");kioskFooter.id="kioskStoreFooter";
+ kioskFooter.innerHTML='<span>QR PAY STORE SYSTEM</span><span>操作にお困りの際はスタッフへお声がけください</span><b>DEMO ONLY</b>';
+ root.appendChild(kioskFooter);
+ const storeName=document.getElementById("kioskStoreName");if(storeName)storeName.textContent=receiptSettings.name||"QR PAY DEMO STORE";
+ const kioskStyle=document.createElement("style");kioskStyle.id="v55-kiosk-design";kioskStyle.textContent=`
+ body.self-kiosk-active{background:#f2f2ef!important;color:#171717!important}
+ body.self-kiosk-active #selfKiosk{position:fixed!important;inset:0!important;z-index:99999!important;width:100vw!important;height:100dvh!important;min-height:100dvh!important;background:#f2f2ef!important;overflow:auto!important}
+ #selfKiosk .kiosk-top{height:68px;flex:0 0 68px;padding:0 clamp(18px,4vw,56px);background:#fff;border-bottom:1px solid #deded9}
+ #selfKiosk .kiosk-brand{font-size:21px;letter-spacing:2px}
+ #selfKiosk .kiosk-demo{font-size:9px;font-weight:800;letter-spacing:1.8px;color:#777}
+ #selfKiosk .kiosk-exit{font-size:12px;min-width:84px}
+ #kioskStoreChrome{height:64px;flex:0 0 64px;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(18px,4vw,56px);background:#fafaf8;border-bottom:1px solid #e5e5e0}
+ .kiosk-store-identity{display:flex;align-items:center;gap:11px}.kiosk-store-symbol{width:36px;height:36px;border-radius:10px;background:#171717;color:#fff;display:grid;place-items:center;font-weight:900;font-size:19px}.kiosk-store-identity strong,.kiosk-store-identity small{display:block}.kiosk-store-identity strong{font-size:14px}.kiosk-store-identity small{font-size:9px;color:#888;letter-spacing:1px;margin-top:3px}
+ .kiosk-register-meta{display:flex;align-items:center;gap:13px;font-size:10px;color:#777}.kiosk-register-meta span{color:#3c7657;font-weight:800}.kiosk-register-meta i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#4b9a68;margin-right:3px}.kiosk-register-meta b{color:#333;font-size:9px;letter-spacing:1px}.kiosk-register-meta small{color:#999;font-size:8px;letter-spacing:1px}
+ #selfKiosk .kiosk-body{width:min(1240px,100%);max-width:1240px;padding:clamp(14px,2.5vw,32px);justify-content:flex-start;overflow:auto}
+ #selfKiosk .kiosk-card{border:1px solid #deded8;border-radius:18px;padding:clamp(18px,3vw,34px);box-shadow:0 8px 26px #1110000a}
+ #selfKiosk .kiosk-start-grid{min-height:min(590px,68vh);grid-template-columns:1.08fr .92fr;gap:clamp(24px,5vw,64px);padding:clamp(28px,5vw,64px)}
+ #selfKiosk .kiosk-start-grid>div:first-child{max-width:570px}
+ #selfKiosk .kiosk-eyebrow{font-size:10px;letter-spacing:2.4px;color:#85857e}
+ #selfKiosk h1{font-size:clamp(34px,5vw,58px);letter-spacing:-2px}
+ #selfKiosk .kiosk-lead{font-size:clamp(14px,1.5vw,17px);line-height:1.85}
+ #selfKiosk .kiosk-primary{min-height:64px;border-radius:12px;font-size:17px;background:#171717;box-shadow:0 4px 0 #00000016}
+ #selfKiosk .kiosk-primary:disabled{opacity:.38!important;cursor:not-allowed}
+ #selfKiosk .kiosk-secondary{min-height:48px;border-radius:10px;font-size:13px}
+ #selfKiosk .kiosk-pay-mark{width:104px;height:104px;border-radius:24px;background:#171717;font-size:45px}
+ #selfKiosk .kiosk-start-grid>div:last-child{background:#f5f5f2;border:1px solid #e8e8e2;border-radius:16px;padding:clamp(20px,3vw,34px)}
+ #selfKiosk .kiosk-start-grid>div:last-child h2{font-size:19px}
+ #selfKiosk .kiosk-steps{gap:0;justify-content:center;margin-bottom:14px}
+ #selfKiosk .kiosk-steps span{flex:1;text-align:center;border-radius:0;background:#e9e9e5;color:#777;padding:11px 7px;font-size:11px}
+ #selfKiosk .kiosk-steps span:first-child{border-radius:9px 0 0 9px}#selfKiosk .kiosk-steps span:last-child{border-radius:0 9px 9px 0}
+ #selfKiosk .kiosk-steps span.active{background:#171717;color:white}
+ #selfKiosk .kiosk-scan-layout{gap:clamp(14px,2vw,24px);grid-template-columns:minmax(0,1.12fr) minmax(300px,.88fr)}
+ #selfKiosk .kiosk-scan-layout>div{min-width:0}
+ #selfKiosk .kiosk-scan-layout>div:last-child{background:#f7f7f4;border:1px solid #e6e6e0;border-radius:14px;padding:18px}
+ #selfKiosk .kiosk-camera{min-height:280px;border:7px solid #202020;border-radius:15px;background:#111;box-shadow:inset 0 0 0 1px #555}
+ #selfKiosk .kiosk-order-list{background:#fff;border:1px solid #e6e6e0;border-radius:10px;padding:8px 12px;min-height:100px;max-height:32vh;overflow:auto}
+ #selfKiosk .kiosk-order-row{padding:11px 2px;border-bottom:1px dashed #e4e4df;font-size:13px}
+ #selfKiosk .kiosk-total{padding:15px 2px;border-top:1px solid #dcdcd6;margin-top:10px}
+ #selfKiosk .kiosk-total strong{font-size:30px;letter-spacing:-1px}
+ #selfKiosk .kiosk-scan-status{background:#f0f0ec;border:1px solid #e5e5df;border-radius:9px;font-size:12px}
+ #selfKiosk .kiosk-input{min-height:48px;border:1px solid #d8d8d2;border-radius:9px;padding:10px 12px;font-size:16px}
+ #selfKiosk .kiosk-method{min-height:112px;border-radius:12px;padding:16px;border-color:#deded8}
+ #selfKiosk .kiosk-method.active{border:2px solid #171717;background:#f1f1ed;box-shadow:inset 0 0 0 1px #171717}
+ #selfKiosk .kiosk-success{max-width:760px;padding:clamp(28px,5vw,58px)}
+ #selfKiosk .kiosk-success .kiosk-pay-mark{background:#171717}
+ #kioskStoreFooter{height:38px;flex:0 0 38px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 clamp(18px,4vw,56px);border-top:1px solid #e3e3de;background:#fff;color:#888;font-size:9px}
+ #kioskStoreFooter span:first-child{font-weight:900;letter-spacing:1.3px;color:#555}#kioskStoreFooter b{font-size:8px;letter-spacing:1px;border:1px solid #ddd;border-radius:20px;padding:4px 8px;color:#777}
+ @media(max-width:760px){#kioskStoreChrome{height:56px;flex-basis:56px;padding:0 14px}.kiosk-register-meta{gap:6px}.kiosk-register-meta small{display:none}#selfKiosk .kiosk-body{padding:12px}#selfKiosk .kiosk-start-grid{grid-template-columns:1fr;min-height:0;padding:22px}#selfKiosk .kiosk-start-grid>div:last-child{padding:18px}#selfKiosk .kiosk-scan-layout{grid-template-columns:1fr}#selfKiosk .kiosk-camera{min-height:210px}#selfKiosk .kiosk-scan-layout>div:last-child{padding:14px}#kioskStoreFooter{padding:0 12px;font-size:8px}#kioskStoreFooter span:nth-child(2){display:none}#selfKiosk .kiosk-success-actions{grid-template-columns:1fr}}
+ @media(min-width:1100px) and (min-height:700px){#selfKiosk .kiosk-body{justify-content:center}}
+ `;
+ document.head.appendChild(kioskStyle);
  let scanner=null,stage="welcome",lastCode="",lastAt=0,lastRecord=null,paymentMethod="qr";
  const money=n=>"¥"+Number(n||0).toLocaleString("ja-JP");
  function screen(id){root.querySelectorAll(".kiosk-screen").forEach(x=>x.classList.toggle("active",x.id===id));}
