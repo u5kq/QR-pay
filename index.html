@@ -178,11 +178,22 @@ function showPayment() {
 
 
 function confirmDemoPayment() {
-    // 今回追加した決済確認処理
+const confirmed = confirm(
+    "これはデモ決済です。\n実際のお金は動きません。\n決済を完了しますか？"
+);
+
+if (!confirmed) {
+    return;
 }
-</script>
-</body>
-</html>
+
+const result = document.getElementById("scanResult");
+
+result.innerHTML = `
+    <h3>デモ決済完了</h3>
+    <p>決済の確認が完了しました。</p>
+    <p>実際のお金は動いていません。</p>
+`;
+}
 </script>
 </body>
 </html>
