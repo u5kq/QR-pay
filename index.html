@@ -158,6 +158,7 @@ function showPayment() {
                     <p>店舗名：<span id="storeName"></span></p>
                     <p>決済金額：<span id="paymentAmount"></span></p>
                     <p>状態：未決済（デモ）</p>
+                    <button onclick="confirmDemoPayment()">この内容で決済する</button>
                 `;
 
                 document.getElementById("storeName").textContent = data.store;
