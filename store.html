@@ -47,7 +47,7 @@ button:disabled{opacity:.4}
 .hidden{display:none}
 footer{text-align:center;color:#888;font-size:11px;padding:20px}
 #receiptSection{max-width:100%;margin:18px auto}
-#receiptPrint{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#171717;background:#fff;padding:30px 34px;width:100%;max-width:760px;min-height:420px;margin:0 auto;border:1px solid #e8e8e4;box-shadow:0 8px 28px rgba(0,0,0,.06);font-size:14px;line-height:1.65}
+#receiptPrint{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#171717;background:#fff;padding:18px 16px;width:80mm;max-width:100%;min-height:0;margin:0 auto;border:1px solid #e8e8e4;box-shadow:0 8px 28px rgba(0,0,0,.06);font-size:11px;line-height:1.5}
 .receipt-brand{text-align:center;font-size:12px;letter-spacing:4px;font-weight:700}
 .receipt-store{text-align:center;font-size:25px;font-weight:800;letter-spacing:.04em;margin:7px 0}
 .receipt-center{text-align:center}
@@ -65,15 +65,27 @@ footer{text-align:center;color:#888;font-size:11px;padding:20px}
 .receipt-footer{text-align:center;font-size:11px;color:#777;line-height:1.8}
 .receipt-stamp{display:inline-block;border:1px solid #aaa;padding:4px 11px;border-radius:3px;font-size:10px;letter-spacing:.12em;margin:10px auto}
 @media print{
- @page{size:A4 portrait;margin:14mm}
+ @page{size:80mm auto;margin:0}
+ html,body{width:80mm!important;margin:0!important;padding:0!important;background:#fff!important}
  body *{visibility:hidden!important}
  #receiptSection,#receiptSection *{visibility:visible!important}
- #receiptSection{position:absolute;left:0;top:0;width:100%;margin:0;padding:0}
- #receiptPrint{box-sizing:border-box;width:100%;max-width:none;min-height:0;border:0;box-shadow:none;padding:8mm 7mm;font-size:12pt}
- .receipt-items-head{grid-template-columns:minmax(0,1fr) 25mm 38mm}
- .receipt-row{grid-template-columns:minmax(0,1fr) 25mm 38mm}
+ #receiptSection{position:absolute;left:0;top:0;width:80mm!important;max-width:80mm!important;margin:0!important;padding:0!important}
+ #receiptPrint{box-sizing:border-box;width:80mm!important;max-width:80mm!important;min-height:0;border:0;box-shadow:none;margin:0;padding:4mm 4mm;font-size:9pt;line-height:1.4;overflow-wrap:anywhere}
+ .receipt-brand{font-size:8pt;letter-spacing:2px}
+ .receipt-store{font-size:16pt;margin:2mm 0}
+ .receipt-sub{font-size:7pt}
+ .receipt-line{margin:3mm 0}
+ .receipt-meta{font-size:7pt;gap:2mm}
+ .receipt-items-head{grid-template-columns:minmax(0,1fr) 10mm 17mm;gap:2mm;font-size:7pt;padding-bottom:2mm}
+ .receipt-row{grid-template-columns:minmax(0,1fr) 10mm 17mm;gap:2mm;padding:2mm 0;font-size:8pt}
+ .receipt-total-wrap{padding:3mm;margin:3mm 0;border-radius:0}
+ .receipt-total{font-size:9pt}
+ .receipt-total strong{font-size:17pt}
+ .receipt-note,.receipt-footer{font-size:7pt;line-height:1.5}
+ .receipt-stamp{font-size:6.5pt;margin:2mm auto}
+ .no-print{display:none!important}
 }
-/* A4 portrait print layout above is authoritative. */
+/* Standard 80mm thermal receipt layout. Match the printer paper setting to 80mm. */
 
 /* QR PAY V2 — Minimal White visual layer. Existing logic and storage remain unchanged. */
 :root{color-scheme:light}
