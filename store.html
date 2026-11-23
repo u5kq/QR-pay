@@ -482,7 +482,7 @@ function renderHistory(){
   date.textContent=isNaN(parsed.getTime())?"日時不明":parsed.toLocaleString("ja-JP");
   const status=document.createElement("span");
   status.className="status";
-  status.textContent=item.status==="issued"?"QR発行済み・決済未確認":"状態不明";
+  status.textContent=item.status==="cancelled"?"取消済み（デモ記録）":item.status==="issued"?"QR発行済み・決済未確認":"状態不明";
   const cancelButton=document.createElement("button");
   cancelButton.className="danger";
   cancelButton.textContent=item.status==="cancelled"?"取消済み":"QR発行を取り消す";
@@ -513,7 +513,7 @@ function renderDashboard(){
  const active=issued.filter(item=>item.status!=="cancelled");
  const amount=active.reduce((sum,item)=>sum+Number(item.amount||0),0);
  document.getElementById("totalIssued").textContent=yen(amount);
- document.getElementById("issuedCount").textContent=issued.length;
+ document.getElementById("issuedCount").textContent=active.length;
 }
 
 function renderAll(){
