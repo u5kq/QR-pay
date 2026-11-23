@@ -495,8 +495,9 @@ body.self-kiosk-active #selfKiosk{display:flex;flex-direction:column}
 #barcodeLabelPrint{display:none}
 #barcodeLabelSection .label-actions>*{flex:1}
 @media print{
- @page{size:A4 portrait;margin:8mm}
- body.qrpay-print-labels #barcodeLabelPrint{display:grid!important;grid-template-columns:repeat(3,50mm);grid-auto-rows:30mm;gap:3mm;align-content:start;justify-content:start}
+ @page labels{size:A4 portrait;margin:8mm}
+ html,body{width:auto!important;margin:0!important;padding:0!important}
+ body.qrpay-print-labels #barcodeLabelPrint{page:labels;display:grid!important;grid-template-columns:repeat(3,50mm);grid-auto-rows:30mm;gap:3mm;align-content:start;justify-content:start}
  .barcode-label{width:50mm;height:30mm;overflow:hidden;border:1px dashed #bbb;padding:1.5mm 2mm;display:flex;flex-direction:column;justify-content:space-between;break-inside:avoid;color:#000;background:#fff;font-family:Arial,sans-serif}
  .barcode-label-name{font-size:8pt;font-weight:700;line-height:1.15;max-height:7mm;overflow:hidden;overflow-wrap:anywhere}
  .barcode-label-price{font-size:10pt;font-weight:800;text-align:right;line-height:1}
