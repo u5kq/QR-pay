@@ -903,6 +903,67 @@ function resetDemo(){
 
 loadReceiptSettingsUI();
 renderAll();
+
+/* QR PAY V3 store operations — additive tools; existing product/cart/history keys remain intact. */
+(function(){
+ const style=document.createElement("style");
+ style.textContent=`
+ #qrV3Tools{background:#fff;border:1px solid #d8d8d8;border-radius:12px;padding:18px;margin:16px 0}
+ #qrV3Tools h2{margin:0 0 12px} #qrV3Tools .v3grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ #qrV3Tools button{min-height:44px} #qrV3Tools input{margin-bottom:8px}
+ .v3-muted{font-size:12px;color:#666;line-height:1.6}
+ @media(max-width:520px){#qrV3Tools .v3grid{grid-template-columns:1fr} main{padding:10px} section{padding:14px}}
+ @media(min-width:900px){main{max-width:1180px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}main>section{margin:0}#qrV3Tools{grid-column:1/-1}}
+ `;
+ document.head.appendChild(style);
+ const main=document.querySelector("main");
+ if(main){
+  const tools=document.createElement("section");tools.id="qrV3Tools";
+  tools.innerHTML='<h2>QR PAY V3 業務ツール</h2><p class="v3-muted">デモ運用向けの在庫管理・データ保護・日次集計。実際の決済・会計・税務処理には使用できません。</p><label for="qrV3ProductSearch">商品を検索</label><input id="qrV3ProductSearch" type="search" placeholder="商品名・バーコードで絞り込み"><div class="v3grid"><button class="secondary" id="qrV3Inventory">在庫一覧CSV</button><button class="secondary" id="qrV3LowStock">在庫不足一覧</button><button class="secondary" id="qrV3Restore">バックアップ復元</button><button class="secondary" id="qrV3Audit">データ整合性チェック</button><button class="secondary" id="qrV3Daily">本日のデモ集計CSV</button><button class="secondary" id="qrV3Print">画面を印刷</button></div><p id="qrV3Message" class="v3-muted" aria-live="polite"></p>';
+  main.insertBefore(tools,main.firstChild);
+ }
+ const msg=t=>{const el=document.getElementById("qrV3Message");if(el)el.textContent=t;};
+ const download=(name,content,type)=>{
+  const url=URL.createObjectURL(new Blob([content],{type}));const a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ };
+ const csv=rows=>"\uFEFF"+rows.map(r=>r.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\r\n");
+ document.getElementById("qrV3ProductSearch")?.addEventListener("input",e=>{
+  const q=e.target.value.trim().toLocaleLowerCase("ja-JP");
+  document.querySelectorAll("#productList>*").forEach(node=>{node.style.display=!q||node.textContent.toLocaleLowerCase("ja-JP").includes(q)?"":"none";});
+ });
+ document.getElementById("qrV3Inventory")?.addEventListener("click",()=>{
+  download("qrpay-inventory.csv",csv([["商品ID","商品名","価格","在庫数","バーコード"],...products.map(p=>[p.id,p.name,p.price,Number.isInteger(p.stock)?p.stock:"未設定",p.barcode||""])]),"text/csv;charset=utf-8");msg("在庫一覧CSVを書き出しました。");
+ });
+ document.getElementById("qrV3LowStock")?.addEventListener("click",()=>{
+  const low=products.filter(p=>Number.isInteger(p.stock)&&p.stock<=5);
+  msg(low.length?low.map(p=>p.name+"：残り"+p.stock+"個").join(" ／ "):"在庫5個以下の商品はありません（在庫未設定の商品は対象外）。");
+ });
+ document.getElementById("qrV3Restore")?.addEventListener("click",()=>{
+  const input=document.createElement("input");input.type="file";input.accept="application/json";
+  input.onchange=async()=>{
+   const file=input.files?.[0];if(!file)return;
+   try{
+    const d=JSON.parse(await file.text());
+    if(!Array.isArray(d.products)||!Array.isArray(d.cart)||!Array.isArray(d.issued)||!d.products.every(p=>p&&typeof p.id==="string"&&typeof p.name==="string"&&Number.isFinite(Number(p.price))&&Number(p.price)>=0)||!d.cart.every(x=>x&&typeof x.id==="string"&&Number.isFinite(Number(x.qty)))||!d.issued.every(x=>x&&typeof x.requestId==="string"&&Number.isFinite(Number(x.amount))))throw new Error("バックアップ形式またはデータ項目が不正です");
+    if(!confirm("現在の店舗デモデータ（商品・カート・発行履歴）をバックアップで置き換えますか？先に現在のデータを保存してください。"))return;
+    products=d.products;cart=d.cart;issued=d.issued;if(d.settings&&typeof d.settings==="object"){receiptSettings=d.settings;localStorage.setItem(KEYS.settings,JSON.stringify(receiptSettings));}
+    save();renderAll();loadReceiptSettingsUI();msg("バックアップを復元しました。");
+   }catch(err){msg("復元失敗："+err.message);}
+  };input.click();
+ });
+ document.getElementById("qrV3Audit")?.addEventListener("click",()=>{
+  const errors=[];if(!Array.isArray(products)||!Array.isArray(cart)||!Array.isArray(issued))errors.push("データ配列");
+  const ids=new Set();products.forEach(p=>{if(ids.has(p.id))errors.push("商品ID重複："+p.id);ids.add(p.id);if(!Number.isFinite(Number(p.price))||Number(p.price)<0)errors.push("価格不正："+p.name);if(p.stock!==undefined&&(!Number.isInteger(Number(p.stock))||Number(p.stock)<0))errors.push("在庫数不正："+p.name);});
+  const tx=new Set();issued.forEach(x=>{if(tx.has(x.requestId))errors.push("取引番号重複："+x.requestId);tx.add(x.requestId);if(!Number.isFinite(Number(x.amount))||Number(x.amount)<0)errors.push("金額不正："+x.requestId);});
+  msg(errors.length?"確認が必要："+errors.slice(0,8).join(" ／ "):"整合性チェック完了：商品"+products.length+"件・カート"+cart.length+"件・取引"+issued.length+"件に基本的な不整合は見つかりませんでした。");
+ });
+ document.getElementById("qrV3Daily")?.addEventListener("click",()=>{
+  const day=new Date().toLocaleDateString("sv-SE");const sales=issued.filter(x=>["cash-demo","barcode-demo"].includes(x.status)&&new Date(x.date).toLocaleDateString("sv-SE")===day);
+  download("qrpay-demo-daily-"+day+".csv",csv([["日付","取引番号","会計方法","金額","商品点数","状態"],...sales.map(x=>[day,x.requestId,x.paymentMethod||"",x.amount,(x.items||[]).reduce((n,i)=>n+Number(i.qty||0),0),"デモ記録"])]),"text/csv;charset=utf-8");msg("本日のデモ会計CSVを書き出しました。");
+ });
+ document.getElementById("qrV3Print")?.addEventListener("click",()=>window.print());
+})();
+
 </script>
 </body>
 </html>
