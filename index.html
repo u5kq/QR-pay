@@ -321,6 +321,29 @@ function confirmDemoPayment() {
 
   window.pendingDemoPayment = null;
 }
+function cancelDemoPayment(requestId) {
+  const history = JSON.parse(localStorage.getItem(historyKey) || "[]");
+  const item = history.find(entry => entry.requestId === requestId);
+  if (!item || item.status === "cancelled") {
+    alert("この取引は取り消せないか、すでに取り消されています。");
+    return;
+  }
+  if (!confirm("このデモ決済を取り消し、デモ残高を復元しますか？\\n実際のお金の返金ではありません。")) return;
+
+  const restoredBalance = getBalance() + Number(item.amount || 0);
+  if (!Number.isFinite(restoredBalance) || restoredBalance < 0) {
+    alert("残高を安全に更新できませんでした。");
+    return;
+  }
+
+  item.status = "cancelled";
+  item.cancelledAt = new Date().toLocaleString("ja-JP");
+  localStorage.setItem(balanceKey, String(restoredBalance));
+  localStorage.setItem(historyKey, JSON.stringify(history));
+  showBalance();
+  showHistory();
+}
+
 function showHome() {
   const history = JSON.parse(
     localStorage.getItem(historyKey) || "[]"
@@ -337,7 +360,8 @@ function showHome() {
     );
   });
 
-  const total = thisMonth.reduce(
+  const activeMonth = thisMonth.filter(item => item.status !== "cancelled");
+  const total = activeMonth.reduce(
     (sum, item) => sum + Number(item.amount || 0),
     0
   );
@@ -346,7 +370,7 @@ function showHome() {
     "¥" + total.toLocaleString("ja-JP");
 
   document.getElementById("monthlyCount").textContent =
-    "決済 " + thisMonth.length + "件";
+    "決済 " + activeMonth.length + "件";
 
   const recent = document.getElementById("recentHistory");
 
@@ -403,8 +427,9 @@ function showHistory() {
             <p>店舗：${escapeHTML(item.store)}</p>
             <p>決済金額：¥${Number(item.amount).toLocaleString("ja-JP")}</p>
             <p>決済日時：${escapeHTML(item.date)}</p>
-            <p>状態：デモ決済完了</p>
+            <p>状態：${item.status === "cancelled" ? "取消済み（デモ）" : "デモ決済完了"}</p>
             <p>取引番号：${escapeHTML(item.requestId)}</p>
+            ${item.status === "cancelled" ? "" : `<button class="secondary" onclick="cancelDemoPayment('${escapeHTML(item.requestId)}')">このデモ決済を取り消す</button>`}
           </details>
         `).join("")
     }
