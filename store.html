@@ -2091,5 +2091,30 @@ renderAll();
 })();
 </script>
 
+<script>
+/* V5.8 KIOSK REFINEMENT — self-checkout only. */
+(function(){
+ const root=document.getElementById("selfKiosk");if(!root)return;
+ const $=id=>root.querySelector("#"+id);
+ const help=$("kioskHelpButton");if(help)help.textContent="スタッフサポート";
+ const helpCopy=$("kioskDialogText");if(helpCopy)helpCopy.textContent="操作にお困りの際は、近くのスタッフにお声がけください。この画面からスタッフ端末への通知は送信されません。";
+ const cash=$("kioskCashTendered");
+ if(cash&&!$("kioskCashQuickAmounts")){
+  const wrap=document.createElement("div");wrap.id="kioskCashQuickAmounts";wrap.className="kiosk-cash-quick";
+  wrap.innerHTML='<button type="button" data-cash="exact">ちょうど</button><button type="button" data-cash="500">＋500円</button><button type="button" data-cash="1000">＋1,000円</button><button type="button" data-cash="clear">クリア</button>';
+  cash.insertAdjacentElement("afterend",wrap);
+  const updateChange=()=>{const paid=Number(cash.value||0),amount=Number(String($("kioskPayTotal")?.textContent||"").replace(/[^\\d]/g,""))||0;const out=$("kioskCashChange");if(out)out.textContent=paid>0&&paid>=amount?"おつり："+("¥"+(paid-amount).toLocaleString("ja-JP")):paid>0?"不足："+("¥"+(amount-paid).toLocaleString("ja-JP")):"お預かり金額を入力してください";};
+  wrap.addEventListener("click",e=>{const b=e.target.closest("button[data-cash]");if(!b)return;const amount=Number(String($("kioskPayTotal")?.textContent||"").replace(/[^\\d]/g,""))||0;const current=Number(cash.value||0);if(b.dataset.cash==="exact")cash.value=String(amount);else if(b.dataset.cash==="500")cash.value=String(current+500);else if(b.dataset.cash==="1000")cash.value=String(current+1000);else cash.value="";cash.dispatchEvent(new Event("input",{bubbles:true}));updateChange();});
+  cash.addEventListener("input",updateChange);updateChange();
+ }
+ const reader=$("selfKioskReader");
+ if(reader&&!reader.parentElement.querySelector(".kiosk-scan-guide")){const guide=document.createElement("div");guide.className="kiosk-scan-guide";guide.innerHTML='<span class="kiosk-scan-guide-frame"></span><span class="kiosk-scan-guide-label">商品バーコードを枠内に合わせてください</span>';reader.insertAdjacentElement("afterend",guide);}
+ const cartBadge=$("kioskCartBadge");if(cartBadge){const parent=cartBadge.closest("button");if(parent)parent.setAttribute("aria-label","買い物かごを確認");}
+ root.querySelectorAll("[data-method]").forEach(button=>{button.setAttribute("aria-pressed",button.classList.contains("active")?"true":"false");button.addEventListener("click",()=>{root.querySelectorAll("[data-method]").forEach(b=>b.setAttribute("aria-pressed",b===button?"true":"false"));});});
+ function updateProgress(){const active=root.querySelector(".kiosk-screen.active");if(!active)return;const id=active.id;const step=id==="kioskWelcome"?0:id==="kioskProducts"?1:id==="kioskCartReview"?2:id==="kioskPayment"?3:4;root.querySelectorAll(".kiosk-steps").forEach(strip=>[...strip.children].forEach((el,i)=>{el.classList.toggle("active",i===step-1);el.classList.toggle("done",i>0&&i<step);}));}
+ const observer=new MutationObserver(updateProgress);root.querySelectorAll(".kiosk-screen").forEach(el=>observer.observe(el,{attributes:true,attributeFilter:["class"]}));updateProgress();
+ const style=document.createElement("style");style.id="v58-kiosk-refinement-style";style.textContent="#selfKiosk .kiosk-card{box-shadow:0 12px 36px #1110000a}\n#selfKiosk .kiosk-eyebrow{font-weight:850;letter-spacing:1.8px}\n#selfKiosk .kiosk-primary,#selfKiosk .kiosk-secondary,#selfKiosk .kiosk-method{transition:background .16s ease,border-color .16s ease,transform .16s ease}\n#selfKiosk .kiosk-primary:active,#selfKiosk .kiosk-secondary:active,#selfKiosk .kiosk-method:active{transform:scale(.985)}\n#selfKiosk .kiosk-steps span.done{background:#e1e7e1;color:#425b49}\n#selfKiosk .kiosk-steps span.active{font-weight:850;box-shadow:inset 0 -2px 0 #fff}\n#selfKiosk .kiosk-scan-guide{display:flex;align-items:center;gap:8px;margin:9px 0 12px;color:#777;font-size:10px}\n#selfKiosk .kiosk-scan-guide-frame{width:28px;height:20px;border:2px solid #777;border-radius:4px;position:relative;flex:none}\n#selfKiosk .kiosk-scan-guide-frame:after{content:\"\";position:absolute;left:2px;right:2px;top:8px;border-top:1px solid #777}\n#selfKiosk #kioskCashQuickAmounts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:10px 0 14px}\n#selfKiosk #kioskCashQuickAmounts button{min-height:42px;padding:5px 7px;border:1px solid #dcdcd6;border-radius:8px;background:#fff;color:#292929;font-size:11px;font-weight:750}\n#selfKiosk [data-method][aria-pressed=true]{outline:2px solid #222;outline-offset:2px}\n#selfKiosk .kiosk-review-row{border-bottom:1px solid #e8e8e3}\n#selfKiosk .kiosk-review-subtotal,#selfKiosk .kiosk-cart-total strong,#selfKiosk .kiosk-total strong{font-variant-numeric:tabular-nums}\n#selfKiosk button:disabled{cursor:not-allowed;filter:grayscale(.35)}\n@media(max-width:520px){#selfKiosk #kioskCashQuickAmounts{grid-template-columns:repeat(2,minmax(0,1fr))}#selfKiosk .kiosk-scan-guide{font-size:9px}}";document.head.appendChild(style);
+})();
+</script>
 </body>
 </html>
