@@ -438,63 +438,6 @@ body.self-kiosk-active #selfKiosk{display:flex;flex-direction:column}
 #selfKiosk #kioskMethodSelectView{max-width:720px}
 #selfKiosk #kioskPaymentDetailView[hidden],#selfKiosk #kioskMethodSelectView[hidden]{display:none!important}
 
-/* V4.1 self-checkout kiosk: one viewport per step, no page scrolling. */
-#selfKiosk{overflow:hidden!important;height:100vh;height:100dvh;overscroll-behavior:none}
-body.self-kiosk-active{height:100vh;height:100dvh;overflow:hidden!important;touch-action:pan-x}
-#selfKiosk .kiosk-top{height:58px;flex:0 0 58px;padding:0 24px}
-#selfKiosk .kiosk-body{width:100%;height:calc(100vh - 58px);height:calc(100dvh - 58px);min-height:0;max-height:calc(100dvh - 58px);padding:14px 22px;overflow:hidden;justify-content:center}
-#selfKiosk .kiosk-screen{width:100%;max-height:100%;min-height:0;overflow:hidden}
-#selfKiosk .kiosk-screen.active{display:flex;align-items:center;justify-content:center}
-#selfKiosk .kiosk-card{width:min(1180px,100%);max-height:100%;overflow:hidden;padding:clamp(14px,2vw,24px);border-radius:18px}
-#selfKiosk h1{font-size:clamp(26px,3vw,40px);margin:7px 0}
-#selfKiosk .kiosk-lead{font-size:clamp(12px,1.25vw,15px);line-height:1.5;margin:6px 0}
-#selfKiosk .kiosk-steps{margin:0 0 9px}
-#selfKiosk .kiosk-steps span{padding:6px 11px}
-#selfKiosk .kiosk-scan-layout{grid-template-columns:minmax(0,1.1fr) minmax(280px,.9fr);gap:14px}
-#selfKiosk .kiosk-camera{min-height:clamp(130px,25vh,250px);max-height:30vh}
-#selfKiosk .kiosk-camera video{max-height:28vh!important;object-fit:contain!important}
-#selfKiosk .kiosk-scan-hint{font-size:11px;margin:5px 0}
-#selfKiosk .kiosk-scan-status{min-height:34px;padding:8px 11px;margin-top:6px;font-size:11px}
-#selfKiosk .kiosk-order-list{max-height:clamp(90px,22vh,210px);overflow-y:auto;overscroll-behavior:contain}
-#selfKiosk .kiosk-order-row{padding:7px 0;font-size:12px}
-#selfKiosk .kiosk-total{margin-top:8px;padding-top:8px}
-#selfKiosk .kiosk-total strong{font-size:clamp(22px,2.3vw,30px)}
-#selfKiosk .kiosk-primary{min-height:54px;margin-top:10px;border-radius:12px;font-size:16px}
-#selfKiosk .kiosk-secondary{min-height:42px;padding:8px 12px;border-radius:10px;font-size:12px}
-#selfKiosk .kiosk-method-grid{gap:8px;margin:8px 0}
-#selfKiosk .kiosk-method{min-height:76px;padding:10px;font-size:19px;border-radius:11px}
-#selfKiosk .kiosk-method strong{font-size:13px}
-#selfKiosk .kiosk-method small{font-size:10px}
-#selfKiosk #kioskContinuePayment{min-height:52px;margin-top:6px}
-#selfKiosk .kiosk-input{min-height:44px;font-size:15px}
-#selfKiosk .acceptance-map{display:none!important}
-#selfKiosk .kiosk-start-grid{gap:18px}
-#selfKiosk .kiosk-pay-mark{width:68px;height:68px;font-size:30px;margin-bottom:10px}
-#selfKiosk .kiosk-success h1{font-size:clamp(30px,4vw,48px)}
-#selfKiosk .kiosk-success-actions{display:flex;gap:10px;justify-content:center;margin-top:16px}
-#selfKiosk .kiosk-success-actions>*{flex:1;max-width:260px}
-@media(max-width:760px){
- #selfKiosk .kiosk-top{height:50px;flex-basis:50px;padding:0 12px}
- #selfKiosk .kiosk-body{height:calc(100dvh - 50px);max-height:calc(100dvh - 50px);padding:8px}
- #selfKiosk .kiosk-screen.active{display:flex}
- #selfKiosk .kiosk-card{padding:12px;border-radius:14px}
- #selfKiosk .kiosk-scan-layout{grid-template-columns:minmax(0,1fr) minmax(0,.9fr);gap:8px}
- #selfKiosk .kiosk-camera{min-height:110px;max-height:21vh;border-radius:10px}
- #selfKiosk .kiosk-camera video{max-height:19vh!important}
- #selfKiosk .kiosk-order-list{max-height:22vh}
- #selfKiosk .kiosk-method{min-height:66px;padding:7px}
- #selfKiosk .kiosk-start-grid{grid-template-columns:1fr .8fr;gap:10px}
- #selfKiosk .kiosk-start-grid .kiosk-pay-mark{width:52px;height:52px}
- #selfKiosk .kiosk-success-actions{gap:7px}
-}
-@media(max-height:620px){
- #selfKiosk .kiosk-body{padding-top:5px;padding-bottom:5px}
- #selfKiosk .kiosk-card{padding:10px}
- #selfKiosk .kiosk-camera{min-height:100px;max-height:21vh}
- #selfKiosk .kiosk-order-list{max-height:16vh}
- #selfKiosk .kiosk-primary{min-height:44px}
- #selfKiosk .kiosk-method{min-height:58px}
-}
 </style>
 </head>
 <body>
@@ -881,7 +824,7 @@ function checkoutCash(){
  if(!confirm("現金でのデモ会計として記録し、レシートを作成しますか？\\n実際の現金授受・決済は行いません。"))return;
  const tendered=Number(document.getElementById("cashTendered")?.value||0);
  if(tendered>0&&tendered<amount){alert("お預かり金額が合計金額より少なくなっています。");return;}
- const record={requestId:"CASH-"+crypto.randomUUID(),subtotal:subtotal(),discount:discount(),taxIncluded:taxIncluded(),taxRate:Number(document.getElementById("taxRate")?.value||10),amount,tendered:tendered||null,change:tendered?Math.max(0,tendered-amount):null,store:receiptSettings.name||"DEMO STORE",date:new Date().toISOString(),status:"cash-demo",paymentMethod:"現金（デモ記録）",items:cart.map(item=>({id:item.id,name:item.name,price:item.price,qty:item.qty}))};
+ const record={requestId:"CASH-"+crypto.randomUUID(),subtotal:subtotal(),discount:discount(),taxIncluded:taxIncluded(),taxRate:Number(document.getElementById("taxRate")?.value||10),amount,tendered:tendered||null,change:tendered?Math.max(0,tendered-amount):null,store:receiptSettings.name||"DEMO STORE",date:new Date().toISOString(),status:"cash-demo",paymentMethod:"現金（デモ）",items:cart.map(item=>({id:item.id,name:item.name,price:item.price,qty:item.qty}))};
  applyDemoInventory(record);issued.unshift(record);cart=[];save();renderAll();
  renderReceipt(record);document.getElementById("receiptSection").classList.remove("hidden");
 }
@@ -1356,12 +1299,12 @@ renderAll();
 (function(){
  const root=document.createElement("div");root.id="selfKiosk";
  root.innerHTML=`
-  <div class="kiosk-top"><div><span class="kiosk-brand">QR PAY</span><span class="kiosk-demo">SELF CHECKOUT / DEMO</span></div><button class="kiosk-exit" id="kioskExit" type="button">終了</button></div>
+  <div class="kiosk-top"><div><span class="kiosk-brand">QR PAY</span><span class="kiosk-demo">SELF CHECKOUT</span></div><button class="kiosk-exit" id="kioskExit" type="button">終了</button></div>
   <div class="kiosk-body">
-   <section class="kiosk-screen active" id="kioskWelcome"><div class="kiosk-card kiosk-start-grid"><div><div class="kiosk-eyebrow">WELCOME</div><h1>セルフレジへ<br>ようこそ。</h1><p class="kiosk-lead">商品のバーコードをスキャンして、お会計へお進みください。</p><button class="kiosk-primary" id="kioskStart" type="button">お買い物を始める　→</button><p class="kiosk-scan-hint">この端末はデモ用です。実際の決済は行われません。</p></div><div><div class="kiosk-pay-mark">▥</div><h2>かんたんセルフチェックアウト</h2><p class="kiosk-lead">① 商品をスキャン<br>② 商品と合計を確認<br>③ 支払いバーコードをスキャン</p></div></div></section>
+   <section class="kiosk-screen active" id="kioskWelcome"><div class="kiosk-card kiosk-start-grid"><div><div class="kiosk-eyebrow">WELCOME</div><h1>セルフレジへ<br>ようこそ。</h1><p class="kiosk-lead">商品のバーコードをスキャンして、お会計へお進みください。</p><button class="kiosk-primary" id="kioskStart" type="button">お買い物を始める　→</button><p class="kiosk-scan-hint">デモ決済モードです。実際のお金の引き落としはありません。</p></div><div><div class="kiosk-pay-mark">▥</div><h2>かんたんセルフチェックアウト</h2><p class="kiosk-lead">① 商品をスキャン<br>② 商品と合計を確認<br>③ 支払いバーコードをスキャン</p></div></div></section>
    <section class="kiosk-screen" id="kioskProducts"><div class="kiosk-steps"><span class="active">1 商品スキャン</span><span>2 お会計</span><span>3 完了</span></div><div class="kiosk-card"><div class="kiosk-eyebrow">SCAN ITEMS</div><h1>商品をスキャン</h1><p class="kiosk-lead">商品のバーコードをカメラにかざしてください。</p><div class="kiosk-scan-layout"><div><div class="kiosk-camera" id="selfKioskReader"></div><p class="kiosk-scan-hint">バーコードを枠内に映してください。読み取ると商品が自動で追加されます。</p><div class="kiosk-scan-status" id="kioskScanStatus" aria-live="polite">カメラを準備しています。</div><div style="display:flex;gap:8px;margin-top:12px"><input class="kiosk-input" id="kioskManualBarcode" placeholder="バーコード番号を入力" inputmode="numeric"><button class="kiosk-secondary" id="kioskManualAdd" type="button">追加</button></div></div><div><h2>スキャンした商品</h2><div class="kiosk-order-list" id="kioskProductRows"></div><div class="kiosk-total"><span>合計（税込）</span><strong id="kioskProductTotal">¥0</strong></div><button class="kiosk-primary" id="kioskToPay" type="button">お会計へ進む　→</button><button class="kiosk-secondary" style="width:100%;margin-top:9px" id="kioskBackWelcome" type="button">スタート画面へ戻る</button></div></div></div></section>
    <section class="kiosk-screen" id="kioskPayment"><div class="kiosk-steps"><span>1 商品スキャン</span><span class="active">2 お会計</span><span>3 完了</span></div><div class="kiosk-card kiosk-scan-layout"><div><div class="kiosk-eyebrow">PAYMENT METHOD</div><h1>お支払い方法</h1><p class="kiosk-lead">ご希望のお支払い方法を選択してください。</p><div id="kioskMethodSelectView"><div class="kiosk-method-grid" id="kioskPaymentMethods"><button type="button" data-method="qr" class="kiosk-method active">▦<strong>QR PAY</strong><small>バーコード決済</small></button><button type="button" data-method="cash" class="kiosk-method">¥<strong>現金</strong><small>現金デモ会計</small></button><button type="button" data-method="card" class="kiosk-method">▭<strong>クレジットカード</strong><small>カード決済デモ</small></button><button type="button" data-method="ic" class="kiosk-method">◎<strong>電子マネー</strong><small>交通系IC等のデモ</small></button></div></div><button class="kiosk-primary" id="kioskContinuePayment" type="button">この支払い方法で次へ　→</button></div><div id="kioskPaymentDetailView" hidden><button class="kiosk-secondary" id="kioskBackPaymentMethods" type="button" style="margin-bottom:12px">← 支払い方法を選び直す</button><div id="kioskQrPayment"><p class="kiosk-lead">QR PAYアプリの「バーコードで支払う」を開き、表示されたバーコードをスキャンしてください。</p><div class="kiosk-camera" id="selfKioskPayReader"></div><div class="kiosk-scan-status" id="kioskPayStatus" aria-live="polite">支払いバーコードをお待ちしています。</div></div><div id="kioskCashPayment" hidden><label for="kioskCashTendered">お預かり金額（任意）</label><input class="kiosk-input" id="kioskCashTendered" type="number" min="0" step="1" placeholder="お預かり金額"><p class="kiosk-scan-status" id="kioskCashChange">おつり：—</p><button class="kiosk-primary" id="kioskConfirmCash" type="button">現金のデモ会計を確定</button></div><div id="kioskOtherPayment" hidden><p class="kiosk-scan-status">選択した支払い方法でデモ会計を記録します。実際のカード・電子マネー処理は行いません。</p><button class="kiosk-primary" id="kioskConfirmOther" type="button">この方法でデモ会計を確定</button></div></div><div><div class="kiosk-eyebrow">ORDER SUMMARY</div><h2>ご注文内容</h2><div class="kiosk-order-list" id="kioskPayRows"></div><div class="kiosk-total"><span>お支払い合計</span><strong id="kioskPayTotal">¥0</strong></div><p class="kiosk-scan-hint">お支払い方法を選んでから、画面の案内に従ってください。</p><button class="kiosk-secondary" id="kioskBackItems" type="button" style="width:100%">商品画面へ戻る</button></div></div></section>
-   <section class="kiosk-screen" id="kioskComplete"><div class="kiosk-card kiosk-success"><div class="kiosk-pay-mark">✓</div><div class="kiosk-eyebrow">PAYMENT COMPLETE</div><h1>お支払いが<br>完了しました</h1><p class="kiosk-lead">ご利用ありがとうございました。</p><h2 id="kioskCompleteAmount">¥0</h2><p id="kioskCompleteId" class="kiosk-lead"></p><span class="kiosk-demo-stamp">DEMO TRANSACTION / NOT A REAL PAYMENT</span><div class="kiosk-success-actions"><button class="kiosk-secondary" id="kioskPrintReceipt" type="button">レシートを印刷</button><button class="kiosk-primary" id="kioskNewCustomer" type="button" style="margin:0">次のお客様　→</button></div></div></section>
+   <section class="kiosk-screen" id="kioskComplete"><div class="kiosk-card kiosk-success"><div class="kiosk-pay-mark">✓</div><div class="kiosk-eyebrow">DEMO CHECKOUT COMPLETE</div><h1>デモ会計を<br>記録しました</h1><p class="kiosk-lead">ご利用ありがとうございました。</p><h2 id="kioskCompleteAmount">¥0</h2><p id="kioskCompleteId" class="kiosk-lead"></p><span class="kiosk-demo-stamp">DEMO ONLY / REAL PAYMENT NOT PROCESSED</span><div class="kiosk-success-actions"><button class="kiosk-secondary" id="kioskPrintReceipt" type="button">レシートを印刷</button><button class="kiosk-primary" id="kioskNewCustomer" type="button" style="margin:0">次のお客様　→</button></div></div></section>
   </div>`;
  document.body.appendChild(root);
  let scanner=null,stage="welcome",lastCode="",lastAt=0,lastRecord=null,paymentMethod="qr";
@@ -1449,12 +1392,12 @@ renderAll();
    if(Date.now()>expires){message("kioskPayStatus","バーコードの有効期限が切れています。アプリで再表示してください。");startCamera("selfKioskPayReader","payment");return;}
    if(used.includes(token)){message("kioskPayStatus","このバーコードは使用済みです。新しいバーコードを表示してください。");startCamera("selfKioskPayReader","payment");return;}
    localStorage.setItem("qrpay_store_used_customer_codes",JSON.stringify([...used,token].slice(-500)));
-   requestId="BARCODE-"+token.slice(0,12);methodLabel="QR PAY（デモ記録）";
+   requestId="BARCODE-"+token.slice(0,12);methodLabel="QR PAY（デモ）";
   }else if(paymentMethod==="cash"){
    const tendered=Number(document.getElementById("kioskCashTendered")?.value||0);
    if(tendered>0&&tendered<amount){message("kioskCashChange","お預かり金額が不足しています。");return;}
    requestId="CASH-"+crypto.randomUUID();methodLabel="現金（デモ記録）";
-  }else{requestId=paymentMethod.toUpperCase()+"-"+crypto.randomUUID();methodLabel=paymentMethod==="card"?"クレジットカード（デモ記録）":"電子マネー（デモ記録）";}
+  }else{requestId=paymentMethod.toUpperCase()+"-"+crypto.randomUUID();methodLabel=paymentMethod==="card"?"クレジットカード（デモ）":"電子マネー（デモ）";}
   const record={requestId,amount,store:receiptSettings.name||"DEMO STORE",date:new Date().toISOString(),status:paymentMethod+"-demo",paymentMethod:methodLabel,items:cart.map(item=>({id:item.id,name:item.name,price:item.price,qty:item.qty}))};
   applyDemoInventory(record);issued.unshift(record);lastRecord=record;cart=[];save();renderAll();renderReceipt(record);
   document.getElementById("receiptSection").classList.remove("hidden");
