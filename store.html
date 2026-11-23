@@ -1160,10 +1160,10 @@ async function startBarcodeCamera(){
    }
    if(mode==="register"){
     document.getElementById("productBarcode").value=decoded;
-    message.textContent="読み取り成功："+decoded+"。商品名と価格を入力して「商品を登録」を押してください。";
+    message.textContent="読み取り成功："+decoded+"。商品名と価格を入力して「商品を登録」を押してください。";window.qrPaySound?.("scan");
    }else{
     document.getElementById("barcodeSearch").value=decoded;
-    lookupBarcode(decoded);
+    lookupBarcode(decoded);window.qrPaySound?.("scan");
    }
    stopBarcodeScanner();
   },()=>{});
@@ -1461,7 +1461,7 @@ renderAll();
       const p=products.find(x=>String(x.barcode||"").trim()===String(decoded).trim());
       if(!p){message("kioskScanStatus","未登録の商品コードです。バーコード番号を確認してください。");return;}
       addToCart(p.id);updateSummary();
-      message("kioskScanStatus","✓ 追加しました："+p.name+"　"+money(p.price)+"　続けてスキャンできます。");
+      message("kioskScanStatus","✓ 追加しました："+p.name+"　"+money(p.price)+"　続けてスキャンできます。");window.qrPaySound?.("scan");
      }else{
       if(!String(decoded).startsWith("QPB1|")){message("kioskPayStatus","QR PAYアプリの支払いバーコードを読み取ってください。");return;}
       await stop();completePayment(decoded);
@@ -1517,7 +1517,7 @@ renderAll();
    requestId="CASH-"+crypto.randomUUID();methodLabel="現金（デモ記録）";
   }else{requestId=paymentMethod.toUpperCase()+"-"+crypto.randomUUID();methodLabel=paymentMethod==="card"?"クレジットカード（デモ）":"電子マネー（デモ）";}
   const record={requestId,amount,store:receiptSettings.name||"DEMO STORE",date:new Date().toISOString(),status:paymentMethod+"-demo",paymentMethod:methodLabel,items:cart.map(item=>({id:item.id,name:item.name,price:item.price,qty:item.qty}))};
-  applyDemoInventory(record);issued.unshift(record);lastRecord=record;cart=[];save();renderAll();renderReceipt(record);
+  applyDemoInventory(record);issued.unshift(record);lastRecord=record;cart=[];save();renderAll();renderReceipt(record);window.qrPaySound?.("paid");
   document.getElementById("receiptSection").classList.remove("hidden");
   document.getElementById("kioskCompleteAmount").textContent=money(amount);
   document.getElementById("kioskCompleteId").textContent="取引番号："+record.requestId;
@@ -1865,6 +1865,23 @@ renderAll();
  });
  const css=".pos-tool-line{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:10px 0}.pos-tool-line strong,.pos-held-head strong{display:block;font-size:12px}.pos-tool-line small,.pos-held-head small{display:block;color:#888;font-size:10px;margin-top:3px}.pos-tool-line button,.pos-held-head button,.pos-held-row button{border:1px solid #ddd;background:#fff;border-radius:9px;padding:8px 11px;font-size:11px;font-weight:700}.pos-tool-line button.active{background:#171717;color:#fff;border-color:#171717}.pos-category-chips{display:flex;gap:6px;flex-wrap:wrap;margin:9px 0}.pos-category-chip{border:1px solid #deded9;background:#fff;border-radius:30px;padding:7px 11px;font-size:11px;color:#444}.pos-category-chip.active{background:#171717;color:#fff;border-color:#171717}.pos-shortcut-hint{border-top:1px solid #eee;padding-top:8px}.pos-product-count{font-size:10px;color:#888;margin:8px 0}.pos-favorite{width:100%;margin-top:6px!important}.pos-favorite[aria-pressed=true]{background:#f2f2ee;border-color:#aaa}.pos-held-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #eee}.pos-held-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #eee}.pos-held-row strong,.pos-held-row small{display:block}.pos-held-row strong{font-size:12px}.pos-held-row small{font-size:10px;color:#888;margin-top:3px}.pos-held-row>div:last-child{display:flex;gap:5px}.pos-held-empty{font-size:11px;color:#999;padding:10px 0}#posHeldCartTools{border:1px solid #e8e8e3;border-radius:12px;padding:0 12px;margin:12px 0;background:#fafaf8}#posHeldCartTools button{cursor:pointer}#productList .product[hidden]{display:none!important}";
  const style=document.createElement("style");style.textContent=css;document.head.appendChild(style);
+})();
+
+/* V5.2 audio feedback: optional short Web Audio cues. */
+(function(){
+ if(window.__qrPayAudioV52)return;window.__qrPayAudioV52=true;
+ const KEY="qrpay_sound_enabled_v52";let enabled=localStorage.getItem(KEY)==="true",ctx=null;
+ function audio(){const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return null;if(!ctx)ctx=new AC();if(ctx.state==="suspended")ctx.resume().catch(()=>{});return ctx;}
+ function tone(freq,start,duration,volume,type){const c=audio();if(!c)return;const osc=c.createOscillator(),gain=c.createGain();osc.type=type||"sine";osc.frequency.setValueAtTime(freq,c.currentTime+start);gain.gain.setValueAtTime(.0001,c.currentTime+start);gain.gain.exponentialRampToValueAtTime(volume,c.currentTime+start+.012);gain.gain.exponentialRampToValueAtTime(.0001,c.currentTime+start+duration);osc.connect(gain);gain.connect(c.destination);osc.start(c.currentTime+start);osc.stop(c.currentTime+start+duration+.02);}
+ window.qrPaySound=function(kind){if(!enabled)return;if(kind==="scan")tone(1046,0,.075,.12);else if(kind==="paid"){tone(660,0,.12,.13);tone(880,.13,.16,.13);tone(1175,.29,.22,.13);}else if(kind==="error"){tone(220,0,.15,.10,"triangle");tone(165,.17,.18,.10,"triangle");}else if(kind==="tap")tone(740,0,.045,.055);};
+ const panel=document.createElement("div");panel.id="posSoundControl";
+ panel.innerHTML='<span class="pos-sound-icon" aria-hidden="true">♫</span><span class="pos-sound-copy"><strong>操作サウンド</strong><small id="posSoundState">OFF</small></span><button type="button" id="posSoundToggle" aria-pressed="false">サウンド OFF</button><button type="button" id="posSoundTest">試聴</button>';
+ const top=document.getElementById("retailTopbar")||document.querySelector("main");if(top)top.append(panel);
+ function paint(){const state=document.getElementById("posSoundState"),toggle=document.getElementById("posSoundToggle");if(state)state.textContent=enabled?"ON ・ 音あり":"OFF ・ 消音";if(toggle){toggle.textContent=enabled?"サウンド ON":"サウンド OFF";toggle.setAttribute("aria-pressed",String(enabled));toggle.classList.toggle("active",enabled);}}
+ document.getElementById("posSoundToggle")?.addEventListener("click",()=>{enabled=!enabled;localStorage.setItem(KEY,String(enabled));if(enabled){audio();window.qrPaySound("tap");}paint();});
+ document.getElementById("posSoundTest")?.addEventListener("click",()=>{if(!enabled){enabled=true;localStorage.setItem(KEY,"true");paint();}audio();window.qrPaySound("paid");});
+ document.addEventListener("pointerdown",()=>{if(enabled)audio();},{once:true,passive:true});
+ const style=document.createElement("style");style.textContent="#posSoundControl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 12px;border:1px solid #e5e5e0;border-radius:12px;background:#fff;margin:8px 0 12px;width:max-content;max-width:100%;box-shadow:0 3px 12px #00000006}#posSoundControl .pos-sound-icon{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:#f1f1ee;font-size:17px}#posSoundControl .pos-sound-copy{min-width:75px}#posSoundControl strong,#posSoundControl small{display:block}#posSoundControl strong{font-size:11px}#posSoundControl small{font-size:9px;color:#888;margin-top:2px}#posSoundControl button{border:1px solid #deded9;background:#fff;border-radius:8px;padding:7px 10px;font-size:10px;font-weight:750}#posSoundControl button.active{background:#171717;color:#fff;border-color:#171717}body.self-kiosk-active #posSoundControl{display:none}@media(max-width:600px){#posSoundControl{width:100%;justify-content:flex-start}}";document.head.appendChild(style);paint();
 })();
 
 </script>
