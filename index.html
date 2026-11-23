@@ -92,6 +92,22 @@ nav span:active{background:#f0f0ed}
 details.panel summary{cursor:pointer}
 @media(min-width:600px){main{padding-top:28px}.balance{padding:30px}}
 
+/* Customer wallet usability refinement */
+body{background:#f4f6f8;color:#17202a}
+header{background:#fff;color:#17202a;padding:20px 20px 16px;border-bottom:1px solid #e4e8ec}
+.logo{font-size:22px;letter-spacing:2px}
+.demo{color:#89939d}
+main{max-width:560px;padding:16px 16px 96px}
+.balance{background:linear-gradient(135deg,#172b3d,#294c68);color:#fff;border:0;border-radius:20px;padding:25px;box-shadow:0 10px 26px rgba(20,40,60,.13)}
+.balance small{color:#d1dbe3}
+.actions{grid-template-columns:1fr 1fr;gap:10px;margin:15px 0}
+.actions button{min-height:76px;font-size:15px;line-height:1.45;border-radius:14px}
+.actions button:first-child{grid-column:1/-1;min-height:92px;font-size:19px;background:#1476b8}
+.actions button:nth-child(2),.actions button:nth-child(3){background:#fff;color:#17202a;border:1px solid #d9e0e6}
+.panel{border:1px solid #e4e8ec;border-radius:15px;box-shadow:0 4px 14px rgba(20,40,60,.035)}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:10px 8px calc(10px + env(safe-area-inset-bottom));border-top:1px solid #e0e5e9;box-shadow:0 -4px 16px rgba(20,40,60,.06)}
+nav span{flex:1;text-align:center;font-size:12px;font-weight:650;padding:10px 4px}
+#reader{border:1px dashed #c6d0d9;background:#f8fafb}
 </style>
 </head>
 <body>
@@ -110,10 +126,10 @@ details.panel summary{cursor:pointer}
 
   <section class="actions">
     <button class="primary" onclick="showPayment()">
-      バーコードを表示
+      バーコードで支払う
     </button>
     <button class="secondary" onclick="showScanner()">
-      QRコードを読み取る
+      お店のQRを読み取る
     </button>
     <button class="secondary" onclick="showTopUp()">デモチャージ</button>
   </section>
@@ -135,9 +151,9 @@ details.panel summary{cursor:pointer}
 
 <nav>
  <span onclick="showHome()">ホーム</span>
-  <span>支払い</span>
-<span onclick="showHistory()">履歴</span>
-  <span>設定</span>
+  <span onclick="showPayment()">支払い</span>
+  <span onclick="showHistory()">履歴</span>
+  <span onclick="showSettings()">設定</span>
 </nav>
 
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -379,6 +395,10 @@ function cancelDemoPayment(requestId) {
   showHistory();
 }
 
+function showSettings(){
+ const content=document.getElementById("content");
+ content.innerHTML='<section class="panel"><h2>設定</h2><p>QR PAY DEMO</p><p class="note">このアプリはデモ専用です。実際の決済・入金は行いません。</p><button class="secondary" onclick="showHome()">ホームに戻る</button></section>';
+}
 function showHome() {
   const history = JSON.parse(
     localStorage.getItem(historyKey) || "[]"
