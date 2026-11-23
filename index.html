@@ -286,7 +286,7 @@ function showPayment() {
   const payload="QPB1|"+token+"|"+expiresAt;
   content.innerHTML='<section class="panel"><h2>店舗で読み取る支払いバーコード</h2><p>この画面を店舗側のQR PAY STOREカメラに見せてください。</p><div style="background:#fff;padding:14px;border:1px solid #eee;border-radius:12px;text-align:center;overflow:hidden"><svg id="customerBarcode" style="width:100%;max-width:360px;height:110px"></svg><strong>QR PAY DEMO</strong></div><p id="barcodeExpiry" class="note"></p><p class="note">有効期限は5分です。期限切れの場合は再表示してください。</p><p class="note">デモ用コードです。店舗との別端末間通信・残高引き落とし・実際の決済は行いません。</p><button class="secondary" onclick="showPayment()">バーコードを更新</button><button class="primary" onclick="showHome()">戻る</button></section>';
   if(typeof JsBarcode==="undefined"){document.getElementById("customerBarcode").outerHTML="<p>バーコードライブラリを読み込めません。通信環境を確認してください。</p>";return;}
-  JsBarcode("#customerBarcode",payload,{format:"CODE128",displayValue:false,margin:8,height:76,width:2,background:"#ffffff",lineColor:"#111111"});
+  JsBarcode("#customerBarcode",payload,{format:"CODE128",displayValue:false,margin:12,height:110,width:3,background:"#ffffff",lineColor:"#111111"});
   document.getElementById("barcodeExpiry").textContent="有効期限："+new Date(expiresAt).toLocaleTimeString("ja-JP");
 }
 
