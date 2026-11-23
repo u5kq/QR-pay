@@ -631,13 +631,18 @@ function loadReceiptSettingsUI(){
  document.getElementById("receiptLogo").value=receiptSettings.logo||"";
 }
 function lookupBarcode(code){
- const value=(code||document.getElementById("barcodeSearch").value).trim();
- const product=products.find(p=>String(p.barcode||"")===value);
+ const value=String(code||document.getElementById("barcodeSearch").value||"").trim();
+ const product=products.find(p=>String(p.barcode||"").trim()===value);
  const message=document.getElementById("barcodeMessage");
- if(!product){message.textContent="商品が見つかりません。バーコード番号を商品登録してください。";return;}
+ if(!value){message.textContent="バーコード番号を入力するか、カメラで読み取ってください。";return;}
+ if(!product){
+  message.textContent="未登録の商品です。商品登録欄からバーコードを読み取り、商品名と価格を登録してください。";
+  return;
+ }
  addToCart(product.id);
+ const cartItem=cart.find(item=>item.id===product.id);
  document.getElementById("barcodeSearch").value="";
- message.textContent=product.name+" をカートに追加しました。";
+ message.textContent="追加しました： "+product.name+" × "+(cartItem?.qty||1)+" ／ "+yen(product.price)+"（合計 "+yen(product.price*(cartItem?.qty||1))+"）";
 }
 function checkoutBarcodeDemo(rawCode){
  const parts=String(rawCode).split("|"),token=parts[1],expiresAt=Number(parts[2]);
@@ -663,7 +668,7 @@ async function startBarcodeScanner(){
  barcodeScanMode="lookup";
  startBarcodeCamera();
 }
-async function startBarcodeCamera(){
+async async function startBarcodeCamera(){
  const message=document.getElementById("barcodeMessage");
  if(typeof Html5Qrcode==="undefined"){message.textContent="スキャナーを読み込めません。番号を手入力してください。";return;}
  try{
