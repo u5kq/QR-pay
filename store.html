@@ -1033,7 +1033,7 @@ function renderHistory(){
  }
  issued.forEach(item=>{
   const row=document.createElement("div");
-  row.className="history-item";
+  row.className="history-item";row.dataset.requestId=item.requestId;
   const title=document.createElement("strong");
   title.textContent=yen(item.amount);
   const date=document.createElement("p");
@@ -1967,11 +1967,11 @@ renderAll();
  history.insertAdjacentElement("beforebegin",historyTools);
  function applyHistory(){
   const rows=[...history.children],today=new Date().toLocaleDateString("sv-SE");let shown=0;
-  rows.forEach((row,i)=>{const item=issued[i];if(!item)return;let ok=true;
+  rows.forEach(row=>{const item=issued.find(x=>x.requestId===row.dataset.requestId);if(!item)return;let ok=true;
    if(historyMode==="today")ok=new Date(item.date).toLocaleDateString("sv-SE")===today;
    if(historyMode==="cash")ok=item.status==="cash-demo";
    if(historyMode==="barcode")ok=item.status==="barcode-demo";
-   if(historyMode==="qr")ok===item.status==="issued";
+   if(historyMode==="qr")ok=item.status==="issued";
    if(historyMode==="cancelled")ok=item.status==="cancelled";
    row.hidden=!ok;if(ok)shown++;
   });
