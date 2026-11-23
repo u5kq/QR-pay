@@ -275,7 +275,7 @@ a{color:#111!important}
 <section>
   <h2>カート</h2>
   <div id="cartList"></div>
-  <div class="total">合計：<span id="cartTotal">¥0</span></div>
+  <div class="grid" style="grid-template-columns:1fr 1fr;gap:10px"><div><label>会計割引（円）</label><input id="discountAmount" type="number" min="0" step="1" value="0" oninput="renderCart()"></div><div><label>税率（商品価格は税込想定）</label><select id="taxRate" onchange="renderCart()"><option value="10">標準税率 10%</option><option value="8">軽減税率 8%</option><option value="0">非課税・対象外 0%</option></select></div></div><div class="metric"><div class="row"><span>小計</span><strong id="subtotalValue">¥0</strong></div><div class="row"><span>割引</span><strong id="discountValue">−¥0</strong></div><div class="row"><span>うち消費税</span><strong id="taxValue">¥0</strong></div><div class="total">合計：<span id="cartTotal">¥0</span></div></div><label>お預かり金額（現金デモ用）</label><input id="cashTendered" type="number" min="0" step="1" placeholder="任意で入力" oninput="updateChangeDue()"><p id="changeDue" class="muted">おつり：—</p>
   <div class="row">
     <button onclick="issueQR()" id="issueButton">QRコードを発行</button>
     <button class="secondary" onclick="checkoutCash()" id="cashButton">現金で会計・レシート</button>
@@ -304,6 +304,14 @@ a{color:#111!important}
   <p class="muted no-print">ブラウザの印刷画面からプリンターまたはPDF保存を選べます。印刷内容はデモ取引の控えです。</p>
 </section>
 
+<section>
+  <h2>営業レポート・締め処理</h2>
+  <div class="grid"><div class="metric"><small>本日のデモ会計件数</small><strong id="todayCount">0件</strong></div><div class="metric"><small>本日のデモ会計合計</small><strong id="todayTotal">¥0</strong></div><div class="metric"><small>在庫少・在庫切れ</small><strong id="lowStockCount">0件</strong></div></div>
+  <div id="lowStockList" class="muted"></div>
+  <h3>商品別販売ランキング（デモ会計のみ）</h3><div id="productRanking"></div>
+  <button class="secondary" onclick="closeDemoShift()">営業終了レポートを作成</button>
+  <button class="secondary" onclick="exportShiftCSV()">締めレポートCSV</button>
+</section>
 <section>
   <h2>取引管理・検索</h2><div class="grid"><div class="metric"><small>デモ会計件数</small><strong id="demoSalesCount">0</strong></div><div class="metric"><small>デモ会計合計</small><strong id="demoSalesTotal">¥0</strong></div></div><input id="historyFilter" placeholder="取引番号・日付・会計方法で検索" oninput="renderHistory()">
   <p class="muted">ここに表示される履歴は、このブラウザでのQR発行記録です。</p>
@@ -384,9 +392,11 @@ function escapeHTML(value){
  })[c]);
 }
 
-function total(){
- return cart.reduce((sum,item)=>sum+item.price*item.qty,0);
-}
+function subtotal(){return cart.reduce((sum,item)=>sum+Number(item.price)*Number(item.qty),0);}
+function discount(){const v=Math.floor(Number(document.getElementById("discountAmount")?.value||0));return Math.max(0,Math.min(v,subtotal()));}
+function taxIncluded(){const rate=Number(document.getElementById("taxRate")?.value??10);return Math.round((subtotal()-discount())*rate/(100+rate));}
+function total(){return Math.max(0,subtotal()-discount());}
+function updateChangeDue(){const el=document.getElementById("changeDue");if(!el)return;const paid=Number(document.getElementById("cashTendered")?.value||0);el.textContent=paid>=total()&&paid>0?"おつり："+yen(paid-total()):"おつり：—";}
 
 function renderProducts(){
  const area=document.getElementById("productList");
@@ -516,8 +526,12 @@ function renderCart(){
   row.append(top,bottom);
   area.appendChild(row);
  });
+ document.getElementById("subtotalValue").textContent=yen(subtotal());
+ document.getElementById("discountValue").textContent="−"+yen(discount());
+ document.getElementById("taxValue").textContent=yen(taxIncluded());
  document.getElementById("cartTotal").textContent=yen(total());
  document.getElementById("issueButton").disabled=!cart.length;
+ updateChangeDue();
 }
 
 function issueQR(){
@@ -544,13 +558,14 @@ function issueQR(){
  const issuedAt=new Date().toISOString();
  const record={
   requestId,
+  subtotal:subtotal(),discount:discount(),taxIncluded:taxIncluded(),taxRate:Number(document.getElementById("taxRate")?.value||10),
   amount,
   store:receiptSettings.name||"DEMO STORE",
   paymentMethod:"QR（デモ）",
   date:issuedAt,
   expiresAt,
   status:"issued",
-  items:cart.map(item=>({name:item.name,price:item.price,qty:item.qty}))
+  items:cart.map(item=>({id:item.id,name:item.name,price:item.price,qty:item.qty}))
  };
  issued.unshift(record);
 
@@ -580,7 +595,9 @@ function checkoutCash(){
  const amount=total();
  if(!amount||amount>100000){alert("合計金額を確認してください。");return;}
  if(!confirm("現金でのデモ会計として記録し、レシートを作成しますか？\\n実際の現金授受・決済は行いません。"))return;
- const record={requestId:"CASH-"+crypto.randomUUID(),amount,store:receiptSettings.name||"DEMO STORE",date:new Date().toISOString(),status:"cash-demo",paymentMethod:"現金（デモ記録）",items:cart.map(item=>({id:item.id,name:item.name,price:item.price,qty:item.qty}))};
+ const tendered=Number(document.getElementById("cashTendered")?.value||0);
+ if(tendered>0&&tendered<amount){alert("お預かり金額が合計金額より少なくなっています。");return;}
+ const record={requestId:"CASH-"+crypto.randomUUID(),subtotal:subtotal(),discount:discount(),taxIncluded:taxIncluded(),taxRate:Number(document.getElementById("taxRate")?.value||10),amount,tendered:tendered||null,change:tendered?Math.max(0,tendered-amount):null,store:receiptSettings.name||"DEMO STORE",date:new Date().toISOString(),status:"cash-demo",paymentMethod:"現金（デモ記録）",items:cart.map(item=>({id:item.id,name:item.name,price:item.price,qty:item.qty}))};
  applyDemoInventory(record);issued.unshift(record);cart=[];save();renderAll();
  renderReceipt(record);document.getElementById("receiptSection").classList.remove("hidden");
 }
@@ -710,6 +727,16 @@ function cancelIssuedQR(requestId){
 
 function renderDashboard(){
  const sales=issued.filter(item=>["cash-demo","barcode-demo"].includes(item.status));
+ const today=new Date().toLocaleDateString("sv-SE");
+ const todaySales=sales.filter(x=>new Date(x.date).toLocaleDateString("sv-SE")===today);
+ document.getElementById("todayCount").textContent=todaySales.length+"件";
+ document.getElementById("todayTotal").textContent=yen(todaySales.reduce((n,x)=>n+Number(x.amount||0),0));
+ const low=products.filter(p=>Number.isInteger(p.stock)&&p.stock<=5);
+ document.getElementById("lowStockCount").textContent=low.length+"件";
+ document.getElementById("lowStockList").textContent=low.length?low.map(p=>p.name+"："+p.stock+"個").join(" ／ "):"在庫不足の商品はありません。";
+ const ranking={};sales.forEach(x=>(x.items||[]).forEach(it=>{ranking[it.name]=(ranking[it.name]||0)+Number(it.qty||0);}));
+ const top=Object.entries(ranking).sort((a,b)=>b[1]-a[1]).slice(0,5);
+ document.getElementById("productRanking").textContent=top.length?top.map((x,i)=>(i+1)+". "+x[0]+"："+x[1]+"個").join(" ／ "):"デモ会計データがありません。";
  document.getElementById("demoSalesCount").textContent=sales.length+"件";
  document.getElementById("demoSalesTotal").textContent=yen(sales.reduce((sum,item)=>sum+Number(item.amount||0),0));
  const active=issued.filter(item=>item.status!=="cancelled");
@@ -835,6 +862,19 @@ function exportData(){
  URL.revokeObjectURL(url);
 }
 
+function closeDemoShift(){
+ const d=new Date().toLocaleDateString("sv-SE");
+ const sales=issued.filter(x=>["cash-demo","barcode-demo"].includes(x.status)&&new Date(x.date).toLocaleDateString("sv-SE")===d);
+ const sum=sales.reduce((n,x)=>n+Number(x.amount||0),0);
+ alert(["営業終了デモレポート","日付："+d,"デモ会計件数："+sales.length,"デモ会計合計："+yen(sum),"QR発行記録は売上に含めていません。","実際の売上・入金・レジ現金残高を証明するものではありません。"].join("\n"));
+}
+function exportShiftCSV(){
+ const d=new Date().toLocaleDateString("sv-SE");
+ const sales=issued.filter(x=>["cash-demo","barcode-demo"].includes(x.status)&&new Date(x.date).toLocaleDateString("sv-SE")===d);
+ const rows=[["日付","取引番号","会計方法","金額","状態"],...sales.map(x=>[d,x.requestId,x.paymentMethod,x.amount,"デモ記録"])];
+ const csv="\uFEFF"+rows.map(row=>row.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\r\n");
+ const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="qrpay-demo-shift-"+d+".csv";a.click();URL.revokeObjectURL(url);
+}
 function exportCSV(){
  const rows=[["種別","日時","商品・店舗","単価","数量","金額","状態","取引番号"]];
  products.forEach(p=>rows.push(["商品","",p.name,p.price,"","","登録済み",p.id]));
