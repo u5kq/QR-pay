@@ -1732,6 +1732,57 @@ renderAll();
  `;
  document.head.appendChild(style);
 })();
+/* V5.0 POS refresh: preserve existing cashier logic, product data, and kiosk state machine. */
+(function(){
+ const main=document.querySelector("main"),workspace=document.getElementById("posWorkspace");
+ const qr=document.getElementById("qrSection"),receipt=document.getElementById("receiptSection");
+ if(!main||!workspace||!qr||!receipt||document.getElementById("posCheckoutHub"))return;
+ const hub=document.createElement("section");hub.id="posCheckoutHub";
+ hub.innerHTML='<div class="pos-hub-head"><div><span class="pos-kicker">CHECKOUT CENTER</span><h2>お会計・支払い情報</h2><p>QRコードの発行結果とレシートをここで確認できます。</p></div><span class="pos-demo-chip">DEMO POS</span></div><div class="pos-hub-grid"></div><div class="pos-hub-empty" id="posHubEmpty"><span class="pos-hub-empty-icon">▦</span><strong>会計待ち</strong><small>商品をカートに追加して、QR会計または現金会計を行ってください。</small></div>';
+ hub.setAttribute("aria-label","会計結果");
+ const grid=hub.querySelector(".pos-hub-grid");grid.append(qr,receipt);workspace.insertAdjacentElement("beforebegin",hub);
+ const update=()=>{const visible=!qr.classList.contains("hidden")||!receipt.classList.contains("hidden");hub.classList.toggle("has-output",visible);hub.querySelector("#posHubEmpty").hidden=visible;};
+ const showQR=()=>{qr.classList.remove("hidden");receipt.classList.remove("hidden");update();};
+ const showReceipt=()=>{receipt.classList.remove("hidden");update();};
+ new MutationObserver(update).observe(qr,{attributes:true,attributeFilter:["class"]});
+ new MutationObserver(update).observe(receipt,{attributes:true,attributeFilter:["class"]});update();
+ if(typeof window.issueQR==="function"&&!window.__v50IssueWrapped){const original=window.issueQR;window.issueQR=function(){const r=original.apply(this,arguments);showQR();return r;};window.__v50IssueWrapped=true;}
+ if(typeof window.checkoutCash==="function"&&!window.__v50CashWrapped){const original=window.checkoutCash;window.checkoutCash=function(){const before=(window.issued||[]).length;const r=original.apply(this,arguments);if((window.issued||[]).length>=before)showReceipt();return r;};window.__v50CashWrapped=true;}
+ const heading=workspace.querySelector(".pos-workspace-heading");
+ if(heading&&!document.getElementById("posQuickActions")){
+  const tools=document.createElement("div");tools.id="posQuickActions";tools.className="pos-quick-actions";
+  tools.innerHTML='<button type="button" id="posFocusSearch">商品を検索 <span>⌕</span></button><button type="button" id="posJumpCheckout">会計エリアへ <span>↗</span></button>';
+  heading.append(tools);
+  tools.querySelector("#posFocusSearch").onclick=()=>{const x=document.getElementById("productFilter");x?.focus();x?.scrollIntoView({behavior:"smooth",block:"center"});};
+  tools.querySelector("#posJumpCheckout").onclick=()=>hub.scrollIntoView({behavior:"smooth",block:"start"});
+ }
+ const css=":root{--pos-ink:#171717;--pos-line:#e7e7e3;--pos-soft:#f6f6f4}"+
+ "body:not(.self-mode){background:#f3f3f1;color:var(--pos-ink)}body:not(.self-mode) header{background:#fff;border-bottom:1px solid var(--pos-line)}"+
+ "body:not(.self-mode) main{max-width:1540px!important;padding:18px 22px 42px!important;gap:16px!important}"+
+ "body:not(.self-mode) #retailTopbar{border-radius:16px;padding:14px 18px;box-shadow:0 4px 18px #00000008}"+
+ "body:not(.self-mode) #posCheckoutHub{display:block;margin:0 0 2px;padding:18px;border:1px solid #deded9;border-radius:18px;background:linear-gradient(145deg,#fff,#f9f9f7);box-shadow:0 8px 26px #00000008;scroll-margin-top:12px}"+
+ ".pos-hub-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:13px}.pos-kicker{font-size:9px;letter-spacing:1.7px;font-weight:850;color:#858580}"+
+ ".pos-hub-head h2{margin:4px 0 3px;font-size:19px}.pos-hub-head p{margin:0;color:#858580;font-size:11px}.pos-demo-chip{border:1px solid #deded9;background:#fff;border-radius:30px;padding:7px 10px;font-size:9px;font-weight:850;letter-spacing:1px;color:#666}"+
+ ".pos-hub-empty{min-height:78px;border:1px dashed #d8d8d2;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;gap:12px;padding:14px}.pos-hub-empty[hidden]{display:none}.pos-hub-empty-icon{width:38px;height:38px;border-radius:11px;background:#f0f0ed;display:grid;place-items:center;font-size:19px}.pos-hub-empty strong{font-size:13px}.pos-hub-empty small{font-size:10px;color:#888}"+
+ ".pos-hub-grid{display:grid;grid-template-columns:minmax(260px,.8fr) minmax(320px,1.2fr);gap:12px;align-items:start}#posCheckoutHub:not(.has-output) .pos-hub-grid{display:none}"+
+ "#posCheckoutHub #qrSection,#posCheckoutHub #receiptSection{display:block!important;min-width:0;margin:0!important;padding:15px!important;border:1px solid #e5e5e1!important;border-radius:13px!important;background:#fff!important;box-shadow:none!important}#posCheckoutHub #qrSection.hidden,#posCheckoutHub #receiptSection.hidden{display:none!important}"+
+ "#posCheckoutHub #qrSection h2{font-size:14px;margin:0 0 10px}#posCheckoutHub #qrArea{border-radius:10px;background:#fafaf8;padding:12px}#posCheckoutHub #qrcode{margin:7px auto}#posCheckoutHub #qrcode img{width:190px;height:190px;max-width:100%;object-fit:contain}#posCheckoutHub #receiptPrint{margin:0 auto 12px;box-shadow:none;border:1px dashed #d7d7d2}#posCheckoutHub .no-print.row{display:flex;gap:8px;flex-wrap:wrap}#posCheckoutHub .no-print.row button{flex:1;min-width:120px}"+
+ "body:not(.self-mode) #posWorkspace{border:0;background:transparent;padding:0;box-shadow:none}body:not(.self-mode) .pos-workspace-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 12px;padding:0 2px}body:not(.self-mode) .pos-workspace-heading strong{font-size:22px;letter-spacing:-.5px}"+
+ ".pos-quick-actions{display:flex;gap:7px;flex-wrap:wrap}.pos-quick-actions button{border:1px solid #deded9;background:#fff;border-radius:9px;padding:9px 12px;font-size:11px;font-weight:750;color:#333}.pos-quick-actions button span{margin-left:7px;color:#888}"+
+ "body:not(.self-mode) #posColumns{grid-template-columns:minmax(0,1.35fr) minmax(360px,.8fr);gap:14px;align-items:start}body:not(.self-mode) #posCatalog,body:not(.self-mode) #posCart{border:1px solid #e3e3df;border-radius:16px;background:#fff;padding:17px;box-shadow:0 5px 18px #00000006}body:not(.self-mode) #posCart{position:sticky;top:12px}"+
+ "body:not(.self-mode) #posCatalog h2,body:not(.self-mode) #posCart h2{font-size:16px;margin:0 0 13px}body:not(.self-mode) #productFilter{height:48px;border:1px solid #dcdcd7;border-radius:10px;padding:0 14px;font-size:14px;background:#fafaf8}"+
+ "body:not(.self-mode) #productList{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px}body:not(.self-mode) #productList .product{border:1px solid #e8e8e4;border-radius:12px;padding:12px;box-shadow:none;transition:border-color .15s,transform .15s}body:not(.self-mode) #productList .product:hover{border-color:#aaa;transform:translateY(-1px)}body:not(.self-mode) #productList .product button{border-radius:9px;min-height:40px}"+
+ "body:not(.self-mode) #cartList{max-height:36vh;overflow:auto}body:not(.self-mode) #posCart .total{font-size:30px;padding:14px 0;margin:10px 0;border-top:1px solid var(--pos-line);text-align:right}body:not(.self-mode) #posCart .pos-main-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}body:not(.self-mode) #posCart .pos-main-actions button{min-height:48px;border-radius:10px;font-size:13px;margin:0}"+
+ "body:not(.self-mode) #posCart .pos-main-actions #issueButton{background:#171717;color:#fff}body:not(.self-mode) #posCart .pos-main-actions #cashButton{background:#fff;color:#171717;border:1px solid #bdbdb7}body:not(.self-mode) .pos-advanced{border:1px solid #e5e5e0;border-radius:12px;background:#fff}body:not(.self-mode) .pos-advanced>summary{padding:13px 15px;font-size:12px;font-weight:750}body:not(.self-mode) #posAdminDrawer{margin-top:3px}"+
+ "#selfKiosk{background:#f1f1ef;color:#171717}#selfKiosk .kiosk-top{background:#fff;border-bottom:1px solid #e3e3df;padding:13px 22px}#selfKiosk .kiosk-brand{font-size:20px;letter-spacing:2px}#selfKiosk .kiosk-demo{color:#888;letter-spacing:1.5px}#selfKiosk .kiosk-body{max-width:1120px;padding:20px 22px}"+
+ "#selfKiosk .kiosk-card{border:1px solid #e3e3df;border-radius:20px;background:#fff;box-shadow:0 12px 35px #00000009;padding:clamp(20px,3vw,34px)}#selfKiosk .kiosk-screen h1{font-size:clamp(27px,4vw,40px);letter-spacing:-1px}#selfKiosk .kiosk-lead{color:#777;line-height:1.75}#selfKiosk .kiosk-primary{background:#171717;color:#fff;border-radius:12px;min-height:52px;font-weight:800}#selfKiosk .kiosk-secondary{background:#fff;color:#171717;border:1px solid #deded9;border-radius:12px;min-height:46px}"+
+ "#selfKiosk .kiosk-method{border:1px solid #e4e4df;border-radius:13px;background:#fafaf8;color:#171717;min-height:112px}#selfKiosk .kiosk-method.active{border:2px solid #171717;background:#fff;box-shadow:0 5px 15px #00000009}#selfKiosk .kiosk-camera{border:1px solid #d9d9d3;border-radius:14px;background:#171717;overflow:hidden}#selfKiosk .kiosk-order-list{border:1px solid #e9e9e5;border-radius:12px;background:#fafaf8;padding:10px}#selfKiosk .kiosk-total{border-top:1px solid #e4e4df;padding-top:14px;margin-top:12px}"+
+ "@media(max-width:900px){body:not(.self-mode) #posColumns{grid-template-columns:1fr}body:not(.self-mode) #posCart{position:static}body:not(.self-mode) #cartList{max-height:280px}.pos-hub-grid{grid-template-columns:1fr}}"+
+ "@media(max-width:600px){body:not(.self-mode) main{padding:12px 10px 28px!important}body:not(.self-mode) #posCheckoutHub{padding:12px;border-radius:14px}.pos-hub-head{align-items:flex-start}.pos-hub-head h2{font-size:16px}.pos-hub-empty{align-items:flex-start;justify-content:flex-start;flex-wrap:wrap}.pos-hub-empty small{width:100%;padding-left:50px}body:not(.self-mode) .pos-workspace-heading{align-items:flex-start;flex-direction:column}body:not(.self-mode) #posCatalog,body:not(.self-mode) #posCart{padding:13px;border-radius:13px}body:not(.self-mode) #productList{grid-template-columns:repeat(2,minmax(0,1fr))}#selfKiosk .kiosk-body{padding:12px}#selfKiosk .kiosk-card{border-radius:15px;padding:17px}}"+
+ "@media print{body:not(.self-mode) #posCheckoutHub{box-shadow:none;border:0;padding:0}body:not(.self-mode) #posCheckoutHub .pos-hub-head,body:not(.self-mode) #posCheckoutHub #qrSection{display:none!important}body:not(.self-mode) #posCheckoutHub #receiptSection{display:block!important}}";
+ const style=document.createElement("style");style.textContent=css;document.head.appendChild(style);
+})();
+
 </script>
 </body>
 </html>
