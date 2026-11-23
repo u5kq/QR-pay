@@ -762,7 +762,45 @@ function printProductLabels(list){
   const labels=pages.join('');
   const html='<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>商品バーコードラベル</title><style>'+
   '@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#000;font-family:Arial,sans-serif}.sheet{width:186mm;height:268mm;display:grid;grid-template-columns:repeat(4,45mm);grid-template-rows:repeat(10,25mm);gap:2mm;align-content:start;justify-content:center;margin:0 auto;break-after:page;page-break-after:always}.sheet:last-of-type{break-after:auto;page-break-after:auto}.barcode-label{width:45mm;height:25mm;overflow:hidden;border:1px dashed #bbb;padding:1mm 1.5mm;display:flex;flex-direction:column;justify-content:space-between;break-inside:avoid;page-break-inside:avoid;color:#000;background:#fff}.barcode-label-name{font-size:7pt;font-weight:700;line-height:1.1;max-height:5mm;overflow:hidden;overflow-wrap:anywhere}.barcode-label-price{font-size:8.5pt;font-weight:800;text-align:right;line-height:1}.barcode-label svg{display:block;width:100%;height:10mm;max-height:10mm}.barcode-label-code{font-size:5.5pt;letter-spacing:.3px;text-align:center;line-height:1}.actions{padding:12px;text-align:center;font:14px sans-serif}@media print{.actions{display:none}.sheet{margin:0 auto}}'+
-  '</style></head><body><div class="actions">A4・45×25mmラベル／1ページ最大40枚・合計 '+list.length+'枚分 — 印刷設定で「実際のサイズ／倍率100%」を選択してください。 <button onclick="window.print()">印刷する</button></div><main class="sheet">'+labels+'</main><script>window.addEventListener("load",()=>setTimeout(()=>window.print(),350));<\/script></body></html>';
+  '</style><style id="qrpay-v36-design-system">/* QR PAY STORE V5.9 retail-grade monochrome POS */
+:root{color-scheme:light;--pos-ink:#191919;--pos-muted:#777;--pos-line:#e5e5e0;--pos-bg:#f3f3f1}
+html,body{min-width:320px;background:var(--pos-bg)!important;color:var(--pos-ink)!important;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:0}
+body{margin:0}
+header{position:sticky;top:0;z-index:80;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:15px clamp(18px,3vw,42px)!important;background:rgba(255,255,255,.96)!important;color:var(--pos-ink)!important;border:0!important;border-bottom:1px solid var(--pos-line)!important;box-shadow:0 3px 16px #00000006!important;backdrop-filter:blur(18px)}
+header h1{margin:0;font-size:19px!important;font-weight:850;letter-spacing:2px!important}header p{margin:0!important;color:#858585!important;font-size:10px!important;font-weight:650;letter-spacing:1.4px}
+main{width:min(1500px,100%);max-width:1500px!important;margin:0 auto!important;padding:22px clamp(14px,2.2vw,32px) 44px!important}
+main>section{margin:0 0 15px!important;padding:21px!important;border:1px solid var(--pos-line)!important;border-radius:14px!important;background:#fff!important;box-shadow:0 3px 14px #00000004!important}
+h2{margin:0 0 16px!important;font-size:15px!important;font-weight:800}h3{font-size:13px!important;font-weight:750}
+label{display:block;margin:10px 0 5px;color:#62625e;font-size:11px;font-weight:700}
+input,select,textarea{min-width:0;max-width:100%;min-height:44px;padding:11px 12px!important;border:1px solid #dcdcd6!important;border-radius:9px!important;background:#fff!important;color:#191919!important;font:inherit;font-size:13px!important;box-shadow:none!important}
+input:focus,select:focus,textarea:focus{border-color:#777!important;outline:3px solid #0000000b}
+button{min-height:43px;padding:10px 14px!important;border:1px solid #191919!important;border-radius:9px!important;background:#191919!important;color:#fff!important;font-size:12px!important;font-weight:750!important;line-height:1.35;transition:background .14s,border-color .14s,transform .14s}
+button:hover{background:#383838!important}button:active{transform:scale(.985)}
+button.secondary{border-color:#d9d9d3!important;background:#fff!important;color:#222!important}button.secondary:hover{background:#f4f4f1!important}
+button.danger{border-color:#e1d8d5!important;background:#fff!important;color:#8a3830!important}button:disabled{opacity:.4;cursor:not-allowed}
+.row{gap:9px;align-items:center}.row>*{min-width:0}.grid{gap:10px}
+.metric{min-width:0;padding:15px!important;border:1px solid #e9e9e4!important;border-radius:11px!important;background:#f8f8f6!important}
+.metric small{color:#777!important;font-size:10px;font-weight:650}.metric strong{margin-top:7px;font-size:22px!important;font-weight:800;letter-spacing:-.6px;font-variant-numeric:tabular-nums}
+.product{min-width:0;padding:15px!important;border:1px solid var(--pos-line)!important;border-radius:12px!important;background:#fff!important;transition:border-color .15s,box-shadow .15s}
+.product:hover{border-color:#bcbcb5!important;box-shadow:0 5px 18px #00000008}.product strong{font-size:13px!important;line-height:1.45}.price{font-size:21px!important;font-weight:850;letter-spacing:-.5px}.product button{width:100%;margin-top:8px}
+.cart-item,.history-item{padding:13px 0!important;border-bottom:1px solid #ededE9!important}.qty{gap:7px}.qty button{min-width:36px;min-height:36px;padding:6px!important}
+.total{margin:15px 0!important;padding-top:13px;border-top:1px solid #e5e5e0;font-size:27px!important;font-weight:850;letter-spacing:-.7px}
+.status{border:1px solid #e5e5e0!important;border-radius:8px!important;background:#f7f7f5!important;color:#555!important}
+.muted{color:#858580!important;font-size:11px!important;line-height:1.65}
+#qrArea{padding:24px!important;border-radius:12px;background:#fafaf8!important}#qrcode{margin:18px auto!important}#qrAmount{display:block;font-size:34px;font-weight:850;letter-spacing:-1px}
+#receiptSection{padding:18px!important}#receiptPrint{box-shadow:0 8px 30px #0000000a!important}
+#posWorkspace{margin-top:14px}#posColumns{gap:16px!important}#posCart{border:1px solid var(--pos-line)!important;border-radius:13px!important;box-shadow:0 8px 28px #00000008!important}#posCatalog,#posCart{background:#fff!important}#posCart .total{font-size:29px!important}#posCart .metric{background:#fafaf8!important}
+#productList{gap:10px!important}#historyList{max-height:520px;overflow:auto}#barcode-reader{overflow:hidden;border-radius:12px}#barcodeLabelSection .label-actions{gap:9px}
+footer{padding:24px;color:#999;font-size:10px;letter-spacing:1px}
+#selfKiosk{color:#191919}#selfKiosk .kiosk-card{border:1px solid #e5e5e0!important;border-radius:18px!important;box-shadow:0 16px 44px #0000000b!important}
+#selfKiosk .kiosk-top{border-bottom:1px solid #e7e7e2}#selfKiosk .kiosk-primary{background:#191919!important;border-color:#191919!important;color:#fff!important}
+#selfKiosk .kiosk-secondary,#selfKiosk .kiosk-method{background:#fff!important;border:1px solid #deded8!important;color:#191919!important}
+#selfKiosk button{min-height:48px;border-radius:10px!important;font-size:13px!important}#selfKiosk input{min-height:50px!important;border-radius:10px!important;font-size:16px!important}
+#selfKiosk .kiosk-eyebrow{color:#777;letter-spacing:1.8px}
+@media(min-width:900px){main{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:15px}main>section{min-width:0;margin:0!important}main>section:first-of-type{grid-column:1/-1}main>section:nth-of-type(2),main>section:nth-of-type(3),main>section:nth-of-type(4),main>section:nth-of-type(5){grid-column:span 1}main>section:nth-of-type(6),main>section:nth-of-type(7),main>section:nth-of-type(8){grid-column:1/-1}main>section:nth-of-type(9),main>section:nth-of-type(10),main>section:nth-of-type(11){grid-column:span 1}}
+@media(max-width:760px){header{align-items:flex-start;flex-direction:column;gap:5px}main{padding:13px 11px 30px!important}main>section{padding:16px!important;margin-bottom:11px!important}.row{align-items:stretch}.row>*{flex:1 1 140px}#productList{grid-template-columns:repeat(2,minmax(0,1fr))!important}#posColumns{grid-template-columns:1fr!important}#posCart{position:static!important;order:-1}}
+@media(max-width:430px){#productList{grid-template-columns:1fr!important}.metric strong{font-size:20px!important}main>section{padding:14px!important}.row button{font-size:11px!important;padding:9px!important}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important;scroll-behavior:auto!important}}</style></head><body><div class="actions">A4・45×25mmラベル／1ページ最大40枚・合計 '+list.length+'枚分 — 印刷設定で「実際のサイズ／倍率100%」を選択してください。 <button onclick="window.print()">印刷する</button></div><main class="sheet">'+labels+'</main><script>window.addEventListener("load",()=>setTimeout(()=>window.print(),350));<\/script></body></html>';
   printWindow.document.open();printWindow.document.write(html);printWindow.document.close();
  }catch(error){printWindow.close();alert("ラベルの印刷画面を作成できませんでした。商品情報を確認してください。");}
 }
