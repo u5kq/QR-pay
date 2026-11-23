@@ -117,14 +117,12 @@ function showPayment() {
     "<h2>支払い用バーコード</h2>" +
     "<p>バーコード機能は次の開発工程で実装します。</p>";
 } 
-  
-function showScanner() {
+  function showScanner() {
     document.getElementById("content").innerHTML = `
         <h2>QRコード読み取り</h2>
-        <p>店舗が発行したQRコードをカメラで読み取ります。</p>
+        <p>店舗のQRコードを読み取ってください。</p>
         <div id="reader" style="width:100%; max-width:400px;"></div>
         <div id="scanResult"></div>
-        <button onclick="showScanner()">再読み込み</button>
     `;
 
     const scanner = new Html5Qrcode("reader");
@@ -132,12 +130,43 @@ function showScanner() {
     scanner.start(
         { facingMode: "environment" },
         { fps: 10, qrbox: 250 },
-        function(decodedText) {
-            scanner.stop();
-            document.getElementById("scanResult").innerHTML =
-                "<p>QRコードを読み取りました。</p>" +
-                "<pre></pre>";
-            document.querySelector("#scanResult pre").textContent = decodedText;
+        async function(decodedText) {
+            await scanner.stop();
+
+            const result = document.getElementById("scanResult");
+
+            try {
+                const data = JSON.parse(decodedText);
+
+                if (
+                    data.type !== "QR_PAY_DEMO" ||
+                    typeof data.amount !== "number" ||
+                    !Number.isFinite(data.amount) ||
+                    data.amount <= 0 ||
+                    typeof data.store !== "string" ||
+                    typeof data.expiresAt !== "number"
+                ) {
+                    throw new Error("QRコードの内容が正しくありません。");
+                }
+
+                if (Date.now() > data.expiresAt) {
+                    throw new Error("このQRコードは有効期限切れです。");
+                }
+
+                result.innerHTML = `
+                    <h3>読み取り成功</h3>
+                    <p>店舗名：<span id="storeName"></span></p>
+                    <p>決済金額：<span id="paymentAmount"></span></p>
+                    <p>状態：未決済（デモ）</p>
+                `;
+
+                document.getElementById("storeName").textContent = data.store;
+                document.getElementById("paymentAmount").textContent =
+                    "¥" + data.amount.toLocaleString("ja-JP");
+
+            } catch (error) {
+                result.textContent = error.message;
+            }
         },
         function(error) {}
     ).catch(function(error) {
