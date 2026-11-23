@@ -141,6 +141,7 @@ footer{color:#999;padding:24px}
   <div class="row">
     <button onclick="issueQR()" id="issueButton">QRコードを発行</button>
     <button class="secondary" onclick="clearCart()">カートを空にする</button>
+    <button class="secondary" onclick="undoCart()" id="undoCartButton" disabled>直前の操作を取り消す</button>
   </div>
 </section>
 
@@ -204,6 +205,24 @@ function load(key,fallback){
 let products=load(KEYS.products,defaults);
 let cart=load(KEYS.cart,[]);
 let issued=load(KEYS.issued,[]);
+let lastCartSnapshot=null;
+
+function rememberCart(){
+ lastCartSnapshot=JSON.stringify(cart);
+ document.getElementById("undoCartButton").disabled=false;
+}
+
+function undoCart(){
+ if(!lastCartSnapshot){
+  alert("取り消せるカート操作がありません。");
+  return;
+ }
+ if(!confirm("直前のカート操作を取り消しますか？"))return;
+ cart=JSON.parse(lastCartSnapshot);
+ lastCartSnapshot=null;
+ document.getElementById("undoCartButton").disabled=true;
+ save();renderAll();
+}
 
 function save(){
  localStorage.setItem(KEYS.products,JSON.stringify(products));
@@ -269,6 +288,7 @@ function removeProduct(id){
 }
 
 function addToCart(id){
+ rememberCart();
  const product=products.find(p=>p.id===id);
  if(!product)return;
  const item=cart.find(x=>x.id===id);
@@ -278,6 +298,7 @@ function addToCart(id){
 }
 
 function changeQty(id,amount){
+ rememberCart();
  const item=cart.find(x=>x.id===id);
  if(!item)return;
  item.qty+=amount;
@@ -286,6 +307,7 @@ function changeQty(id,amount){
 }
 
 function removeCartItem(id){
+ rememberCart();
  cart=cart.filter(x=>x.id!==id);
  save();renderAll();
 }
@@ -293,6 +315,7 @@ function removeCartItem(id){
 function clearCart(){
  if(!cart.length)return;
  if(!confirm("カートを空にしますか？"))return;
+ rememberCart();
  cart=[];save();renderAll();
 }
 
@@ -460,18 +483,35 @@ function renderHistory(){
   const status=document.createElement("span");
   status.className="status";
   status.textContent=item.status==="issued"?"QR発行済み・決済未確認":"状態不明";
+  const cancelButton=document.createElement("button");
+  cancelButton.className="danger";
+  cancelButton.textContent=item.status==="cancelled"?"取消済み":"QR発行を取り消す";
+  cancelButton.disabled=item.status==="cancelled";
+  cancelButton.style.marginTop="8px";
+  cancelButton.onclick=()=>cancelIssuedQR(item.requestId);
+
   const receiptButton=document.createElement("button");
   receiptButton.className="secondary";
   receiptButton.textContent="控えを表示・印刷";
   receiptButton.style.marginTop="8px";
   receiptButton.onclick=()=>printReceiptById(item.requestId);
-  row.append(title,date,status,receiptButton);
+  row.append(title,date,status,cancelButton,receiptButton);
   area.appendChild(row);
  });
 }
 
+function cancelIssuedQR(requestId){
+ const item=issued.find(x=>x.requestId===requestId);
+ if(!item||item.status==="cancelled")return;
+ if(!confirm("このQR発行記録を取り消しますか？\\n※USER側の残高や決済履歴は変更されません。"))return;
+ item.status="cancelled";
+ item.cancelledAt=new Date().toISOString();
+ save();renderAll();
+}
+
 function renderDashboard(){
- const amount=issued.reduce((sum,item)=>sum+Number(item.amount||0),0);
+ const active=issued.filter(item=>item.status!=="cancelled");
+ const amount=active.reduce((sum,item)=>sum+Number(item.amount||0),0);
  document.getElementById("totalIssued").textContent=yen(amount);
  document.getElementById("issuedCount").textContent=issued.length;
 }
