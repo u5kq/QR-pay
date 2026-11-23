@@ -363,6 +363,60 @@ body.self-mode #qrSection,body.self-mode #receiptSection{max-width:560px;margin:
 }
 @media(max-width:390px){body.self-mode #productList{grid-template-columns:1fr}}
 
+
+/* V3.5 — full-screen, barcode-first self-checkout journey */
+#selfKiosk{display:none;position:fixed;inset:0;z-index:9999;background:#f5f5f3;color:#151515;overflow:auto;font-family:inherit}
+body.self-kiosk-active{overflow:hidden}
+body.self-kiosk-active>header,body.self-kiosk-active>#qrModeBar,body.self-kiosk-active>main{display:none!important}
+body.self-kiosk-active #selfKiosk{display:flex;flex-direction:column}
+#selfKiosk .kiosk-top{height:66px;flex:0 0 66px;background:#fff;border-bottom:1px solid #e8e8e5;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(16px,4vw,48px)}
+#selfKiosk .kiosk-brand{font-size:20px;font-weight:900;letter-spacing:1.6px}
+#selfKiosk .kiosk-demo{font-size:10px;color:#777;letter-spacing:1.3px;margin-left:10px}
+#selfKiosk .kiosk-exit{border:1px solid #ddd;background:#fff;color:#333;border-radius:30px;padding:9px 16px;font-weight:700}
+#selfKiosk .kiosk-body{width:min(1120px,100%);margin:auto;padding:clamp(18px,4vw,42px);flex:1;display:flex;flex-direction:column;justify-content:center}
+#selfKiosk .kiosk-screen{display:none}
+#selfKiosk .kiosk-screen.active{display:block}
+#selfKiosk .kiosk-eyebrow{font-size:12px;letter-spacing:2px;color:#777;font-weight:800}
+#selfKiosk h1{font-size:clamp(30px,5vw,54px);line-height:1.18;letter-spacing:-1.5px;margin:12px 0}
+#selfKiosk .kiosk-lead{font-size:clamp(15px,2vw,19px);color:#666;line-height:1.8}
+#selfKiosk .kiosk-card{background:#fff;border:1px solid #e6e6e2;border-radius:26px;padding:clamp(20px,4vw,38px);box-shadow:0 12px 36px #00000008}
+#selfKiosk .kiosk-primary{width:100%;min-height:72px;border:0;border-radius:18px;background:#111;color:#fff;font-size:20px;font-weight:850;margin-top:22px}
+#selfKiosk .kiosk-secondary{min-height:52px;border:1px solid #d8d8d4;border-radius:14px;background:#fff;color:#111;font-weight:750;padding:12px 18px}
+#selfKiosk .kiosk-start-grid{display:grid;grid-template-columns:1fr minmax(240px,.8fr);gap:22px;align-items:center}
+#selfKiosk .kiosk-steps{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px}
+#selfKiosk .kiosk-steps span{padding:9px 14px;border-radius:30px;background:#fff;border:1px solid #e4e4e0;color:#888;font-size:12px;font-weight:750}
+#selfKiosk .kiosk-steps span.active{background:#111;border-color:#111;color:#fff}
+#selfKiosk .kiosk-scan-layout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(280px,.9fr);gap:18px;align-items:start}
+#selfKiosk .kiosk-camera{min-height:230px;border-radius:20px;background:#171717;overflow:hidden;display:flex;align-items:center;justify-content:center}
+#selfKiosk #selfKioskReader{width:100%;max-width:640px}
+#selfKiosk #selfKioskReader video{object-fit:cover;border-radius:16px}
+#selfKiosk .kiosk-scan-hint{text-align:center;color:#777;font-size:13px;line-height:1.7;margin-top:12px}
+#selfKiosk .kiosk-scan-status{border-radius:14px;background:#f1f1ef;padding:13px 15px;font-size:13px;min-height:48px;margin-top:12px}
+#selfKiosk .kiosk-order-list{max-height:35vh;overflow:auto}
+#selfKiosk .kiosk-order-row{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #eee;font-size:14px}
+#selfKiosk .kiosk-total{display:flex;justify-content:space-between;align-items:center;margin-top:15px;padding-top:14px;border-top:1px solid #ddd;font-weight:800}
+#selfKiosk .kiosk-total strong{font-size:30px}
+#selfKiosk .kiosk-input{width:100%;min-height:52px;border:1px solid #ddd;border-radius:13px;padding:0 14px;font-size:17px}
+#selfKiosk .kiosk-pay-mark{width:92px;height:92px;border-radius:28px;background:#111;color:white;display:grid;place-items:center;font-size:38px;margin-bottom:20px}
+#selfKiosk .kiosk-success{text-align:center;max-width:700px;margin:auto}
+#selfKiosk .kiosk-success .kiosk-pay-mark{margin:0 auto 22px;background:#111}
+#selfKiosk .kiosk-success h1{font-size:clamp(34px,6vw,62px)}
+#selfKiosk .kiosk-demo-stamp{display:inline-block;border:1px solid #ccc;border-radius:30px;padding:7px 13px;font-size:11px;letter-spacing:1px;color:#666;margin-top:15px}
+#selfKiosk .kiosk-success-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px}
+#selfKiosk button{cursor:pointer;touch-action:manipulation}
+#selfKiosk button:focus-visible,#selfKiosk input:focus-visible{outline:3px solid #888;outline-offset:3px}
+@media(max-width:760px){
+ #selfKiosk .kiosk-top{height:58px;flex-basis:58px}
+ #selfKiosk .kiosk-brand{font-size:17px}
+ #selfKiosk .kiosk-body{padding:16px;justify-content:flex-start}
+ #selfKiosk .kiosk-start-grid,#selfKiosk .kiosk-scan-layout{grid-template-columns:1fr}
+ #selfKiosk .kiosk-camera{min-height:190px}
+ #selfKiosk .kiosk-card{border-radius:20px;padding:19px}
+ #selfKiosk .kiosk-primary{min-height:64px;font-size:18px}
+ #selfKiosk .kiosk-order-list{max-height:22vh}
+ #selfKiosk .kiosk-success-actions{grid-template-columns:1fr}
+}
+
 </style>
 </head>
 <body>
@@ -1217,6 +1271,102 @@ renderAll();
  document.getElementById("qrStaffMode").addEventListener("click",()=>setMode("staff"));
  document.getElementById("qrSelfMode").addEventListener("click",()=>setMode("self"));
  setMode(localStorage.getItem("qrpay_store_mode")==="self"?"self":"staff");
+})();
+
+
+/* V3.5 self-checkout state machine. Demo-only: no real payment or balance settlement. */
+(function(){
+ const root=document.createElement("div");root.id="selfKiosk";
+ root.innerHTML=`
+  <div class="kiosk-top"><div><span class="kiosk-brand">QR PAY</span><span class="kiosk-demo">SELF CHECKOUT / DEMO</span></div><button class="kiosk-exit" id="kioskExit" type="button">終了</button></div>
+  <div class="kiosk-body">
+   <section class="kiosk-screen active" id="kioskWelcome"><div class="kiosk-card kiosk-start-grid"><div><div class="kiosk-eyebrow">WELCOME</div><h1>セルフレジへ<br>ようこそ。</h1><p class="kiosk-lead">商品のバーコードをスキャンして、お会計へお進みください。</p><button class="kiosk-primary" id="kioskStart" type="button">お買い物を始める　→</button><p class="kiosk-scan-hint">この端末はデモ用です。実際の決済は行われません。</p></div><div><div class="kiosk-pay-mark">▥</div><h2>かんたんセルフチェックアウト</h2><p class="kiosk-lead">① 商品をスキャン<br>② 商品と合計を確認<br>③ 支払いバーコードをスキャン</p></div></div></section>
+   <section class="kiosk-screen" id="kioskProducts"><div class="kiosk-steps"><span class="active">1 商品スキャン</span><span>2 お会計</span><span>3 完了</span></div><div class="kiosk-card"><div class="kiosk-eyebrow">SCAN ITEMS</div><h1>商品をスキャン</h1><p class="kiosk-lead">商品のバーコードをカメラにかざしてください。</p><div class="kiosk-scan-layout"><div><div class="kiosk-camera" id="selfKioskReader"></div><p class="kiosk-scan-hint">バーコードを枠内に映してください。読み取ると商品が自動で追加されます。</p><div class="kiosk-scan-status" id="kioskScanStatus" aria-live="polite">カメラを準備しています。</div><div style="display:flex;gap:8px;margin-top:12px"><input class="kiosk-input" id="kioskManualBarcode" placeholder="バーコード番号を入力" inputmode="numeric"><button class="kiosk-secondary" id="kioskManualAdd" type="button">追加</button></div></div><div><h2>スキャンした商品</h2><div class="kiosk-order-list" id="kioskProductRows"></div><div class="kiosk-total"><span>合計（税込）</span><strong id="kioskProductTotal">¥0</strong></div><button class="kiosk-primary" id="kioskToPay" type="button">お会計へ進む　→</button><button class="kiosk-secondary" style="width:100%;margin-top:9px" id="kioskBackWelcome" type="button">スタート画面へ戻る</button></div></div></div></section>
+   <section class="kiosk-screen" id="kioskPayment"><div class="kiosk-steps"><span>1 商品スキャン</span><span class="active">2 お会計</span><span>3 完了</span></div><div class="kiosk-card kiosk-scan-layout"><div><div class="kiosk-eyebrow">BARCODE PAYMENT</div><h1>お支払い</h1><p class="kiosk-lead">QR PAYアプリの「バーコードで支払う」を開き、表示されたバーコードをスキャンしてください。</p><div class="kiosk-camera" id="selfKioskPayReader"></div><div class="kiosk-scan-status" id="kioskPayStatus" aria-live="polite">支払いバーコードをお待ちしています。</div></div><div><div class="kiosk-eyebrow">ORDER SUMMARY</div><h2>ご注文内容</h2><div class="kiosk-order-list" id="kioskPayRows"></div><div class="kiosk-total"><span>お支払い合計</span><strong id="kioskPayTotal">¥0</strong></div><p class="kiosk-scan-hint">支払いバーコードは有効期限内のものを読み取ってください。</p><button class="kiosk-secondary" id="kioskBackItems" type="button" style="width:100%">商品画面へ戻る</button></div></div></section>
+   <section class="kiosk-screen" id="kioskComplete"><div class="kiosk-card kiosk-success"><div class="kiosk-pay-mark">✓</div><div class="kiosk-eyebrow">PAYMENT COMPLETE</div><h1>お支払いが<br>完了しました</h1><p class="kiosk-lead">ご利用ありがとうございました。</p><h2 id="kioskCompleteAmount">¥0</h2><p id="kioskCompleteId" class="kiosk-lead"></p><span class="kiosk-demo-stamp">DEMO TRANSACTION / NOT A REAL PAYMENT</span><div class="kiosk-success-actions"><button class="kiosk-secondary" id="kioskPrintReceipt" type="button">レシートを印刷</button><button class="kiosk-primary" id="kioskNewCustomer" type="button" style="margin:0">次のお客様　→</button></div></div></section>
+  </div>`;
+ document.body.appendChild(root);
+ let scanner=null,stage="welcome",lastCode="",lastAt=0,lastRecord=null;
+ const money=n=>"¥"+Number(n||0).toLocaleString("ja-JP");
+ function screen(id){root.querySelectorAll(".kiosk-screen").forEach(x=>x.classList.toggle("active",x.id===id));}
+ function message(id,text){const el=document.getElementById(id);if(el)el.textContent=text;}
+ function stop(){if(scanner){try{if(scanner.isScanning)scanner.stop();}catch(e){}}}
+ function cartRows(target){
+  const el=document.getElementById(target);if(!el)return;
+  if(!cart.length){el.innerHTML='<p class="kiosk-scan-hint">商品がまだありません。</p>';return;}
+  el.innerHTML=cart.map(item=>'<div class="kiosk-order-row"><span>'+escapeHTML(item.name)+' × '+Number(item.qty)+'</span><strong>'+money(item.price*item.qty)+'</strong></div>').join("");
+ }
+ function updateSummary(){
+  cartRows("kioskProductRows");cartRows("kioskPayRows");
+  const t=money(total());
+  document.getElementById("kioskProductTotal").textContent=t;
+  document.getElementById("kioskPayTotal").textContent=t;
+  document.getElementById("kioskToPay").disabled=!cart.length;
+  document.getElementById("kioskToPay").style.opacity=cart.length?"1":".45";
+ }
+ async function startCamera(target,kind){
+  await stop();
+  const node=document.getElementById(target);
+  if(!node||typeof Html5Qrcode==="undefined"){message(kind==="items"?"kioskScanStatus":"kioskPayStatus","カメラ機能を利用できません。バーコード番号を入力してください。");return;}
+  try{
+   scanner=new Html5Qrcode(target);
+   const formats=[Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.EAN_8,Html5QrcodeSupportedFormats.UPC_A,Html5QrcodeSupportedFormats.UPC_E,Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.CODE_39,Html5QrcodeSupportedFormats.ITF];
+   await scanner.start({facingMode:"environment"},{fps:12,qrbox:{width:Math.min(320,Math.floor(window.innerWidth*.72)),height:110},formatsToSupport:formats},async decoded=>{
+    const now=Date.now();if(decoded===lastCode&&now-lastAt<1400)return;lastCode=decoded;lastAt=now;
+    if(kind==="items"){
+     const p=products.find(x=>String(x.barcode||"").trim()===String(decoded).trim());
+     if(!p){message("kioskScanStatus","未登録の商品コードです。店舗スタッフにお知らせください。");return;}
+     addToCart(p.id);updateSummary();message("kioskScanStatus","追加しました："+p.name+"　"+money(p.price)+"　続けてスキャンできます。");
+    }else{
+     if(!String(decoded).startsWith("QPB1|")){message("kioskPayStatus","QR PAYアプリの支払いバーコードを読み取ってください。");return;}
+     await stop();completePayment(decoded);
+    }
+   },()=>{});
+   try{await scanner.applyVideoConstraints({advanced:[{focusMode:"continuous"}]});}catch(e){}
+   message(kind==="items"?"kioskScanStatus":"kioskPayStatus",kind==="items"?"カメラ起動済み。商品バーコードをスキャンしてください。":"支払いバーコードをスキャンしてください。");
+  }catch(e){message(kind==="items"?"kioskScanStatus":"kioskPayStatus","カメラを起動できません。ブラウザのカメラ許可を確認してください。");}
+ }
+ function enter(mode){
+  stage=mode;document.body.classList.add("self-kiosk-active");
+  if(mode==="welcome"){screen("kioskWelcome");}
+ }
+ function startSession(){
+  cart=[];save();renderAll();updateSummary();stage="items";screen("kioskProducts");startCamera("selfKioskReader","items");
+ }
+ function toPayment(){
+  if(!cart.length){message("kioskScanStatus","先に商品をスキャンしてください。");return;}
+  stop();stage="payment";updateSummary();screen("kioskPayment");startCamera("selfKioskPayReader","payment");
+ }
+ function completePayment(raw){
+  const parts=String(raw).split("|"),token=parts[1],expires=Number(parts[2]);
+  const used=load("qrpay_store_used_customer_codes",[]);
+  if(parts[0]!=="QPB1"||!token||!Number.isFinite(expires)){message("kioskPayStatus","バーコード形式が正しくありません。");startCamera("selfKioskPayReader","payment");return;}
+  if(Date.now()>expires){message("kioskPayStatus","バーコードの有効期限が切れています。アプリで再表示してください。");startCamera("selfKioskPayReader","payment");return;}
+  if(used.includes(token)){message("kioskPayStatus","このバーコードは使用済みです。新しいバーコードを表示してください。");startCamera("selfKioskPayReader","payment");return;}
+  const amount=total();if(!amount||amount>100000){message("kioskPayStatus","合計金額を確認してください。");return;}
+  localStorage.setItem("qrpay_store_used_customer_codes",JSON.stringify([...used,token].slice(-500)));
+  const record={requestId:"BARCODE-"+token.slice(0,12),amount,store:receiptSettings.name||"DEMO STORE",date:new Date().toISOString(),status:"barcode-demo",paymentMethod:"バーコード（デモ記録）",items:cart.map(item=>({id:item.id,name:item.name,price:item.price,qty:item.qty}))};
+  applyDemoInventory(record);issued.unshift(record);lastRecord=record;cart=[];save();renderAll();renderReceipt(record);
+  document.getElementById("receiptSection").classList.remove("hidden");
+  document.getElementById("kioskCompleteAmount").textContent=money(amount);
+  document.getElementById("kioskCompleteId").textContent="取引番号："+record.requestId;
+  stage="complete";screen("kioskComplete");
+ }
+ document.getElementById("kioskStart").onclick=startSession;
+ document.getElementById("kioskToPay").onclick=toPayment;
+ document.getElementById("kioskBackWelcome").onclick=()=>{stop();cart=[];save();renderAll();enter("welcome");};
+ document.getElementById("kioskBackItems").onclick=()=>{stop();stage="items";screen("kioskProducts");startCamera("selfKioskReader","items");};
+ document.getElementById("kioskManualAdd").onclick=()=>{const input=document.getElementById("kioskManualBarcode"),code=input.value.trim(),p=products.find(x=>String(x.barcode||"").trim()===code);if(!p){message("kioskScanStatus","商品が見つかりません。バーコードを確認してください。");return;}addToCart(p.id);input.value="";updateSummary();message("kioskScanStatus","追加しました："+p.name);};
+ document.getElementById("kioskNewCustomer").onclick=()=>{stage="welcome";screen("kioskWelcome");};
+ document.getElementById("kioskPrintReceipt").onclick=()=>{document.getElementById("receiptSection").classList.remove("hidden");printReceiptById(lastRecord?.requestId);};
+ document.getElementById("kioskExit").onclick=()=>{stop();document.body.classList.remove("self-kiosk-active");document.body.classList.remove("self-mode");document.getElementById("qrStaffMode").click();};
+ window.addEventListener("beforeunload",stop);
+ window.addEventListener("qrpay:selfmode",()=>enter("welcome"));
+ window.qrPaySelfKiosk={start:()=>enter("welcome"),stop};
+ // Staff mode scanner stays separate. Self mode launches full-screen welcome, never directly into the catalogue.
+ const staffButton=document.getElementById("qrStaffMode"),selfButton=document.getElementById("qrSelfMode");
+ selfButton.addEventListener("click",()=>{setTimeout(()=>enter("welcome"),0);});
+ staffButton.addEventListener("click",()=>{stop();document.body.classList.remove("self-kiosk-active");});
 })();
 
 </script>
