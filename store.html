@@ -417,6 +417,15 @@ body.self-kiosk-active #selfKiosk{display:flex;flex-direction:column}
  #selfKiosk .kiosk-success-actions{grid-template-columns:1fr}
 }
 
+
+/* V3.6 barcode scanning clarity */
+#selfKiosk .kiosk-camera{min-height:260px;padding:10px;background:#101010}
+#selfKiosk #selfKioskReader,#selfKiosk #selfKioskPayReader{width:100%;max-width:760px;margin:auto}
+#selfKiosk #selfKioskReader video,#selfKiosk #selfKioskPayReader video{width:100%!important;max-height:420px!important;object-fit:contain!important}
+#selfKiosk #selfKioskReader__scan_region,#selfKiosk #selfKioskPayReader__scan_region{background:#101010!important}
+#selfKiosk #selfKioskReader__dashboard_section_csr button,#selfKiosk #selfKioskPayReader__dashboard_section_csr button{min-height:40px;border-radius:10px}
+@media(max-width:760px){#selfKiosk .kiosk-camera{min-height:220px;padding:6px}#selfKiosk #selfKioskReader video,#selfKiosk #selfKioskPayReader video{max-height:300px!important}}
+
 </style>
 </head>
 <body>
@@ -1309,22 +1318,38 @@ renderAll();
   const node=document.getElementById(target);
   if(!node||typeof Html5Qrcode==="undefined"){message(kind==="items"?"kioskScanStatus":"kioskPayStatus","カメラ機能を利用できません。バーコード番号を入力してください。");return;}
   try{
-   scanner=new Html5Qrcode(target);
+   scanner=new Html5Qrcode(target,{verbose:false,useBarCodeDetectorIfSupported:true});
    const formats=[Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.EAN_8,Html5QrcodeSupportedFormats.UPC_A,Html5QrcodeSupportedFormats.UPC_E,Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.CODE_39,Html5QrcodeSupportedFormats.ITF];
-   await scanner.start({facingMode:"environment"},{fps:12,qrbox:{width:Math.min(320,Math.floor(window.innerWidth*.72)),height:110},formatsToSupport:formats},async decoded=>{
-    const now=Date.now();if(decoded===lastCode&&now-lastAt<1400)return;lastCode=decoded;lastAt=now;
-    if(kind==="items"){
-     const p=products.find(x=>String(x.barcode||"").trim()===String(decoded).trim());
-     if(!p){message("kioskScanStatus","未登録の商品コードです。店舗スタッフにお知らせください。");return;}
-     addToCart(p.id);updateSummary();message("kioskScanStatus","追加しました："+p.name+"　"+money(p.price)+"　続けてスキャンできます。");
-    }else{
-     if(!String(decoded).startsWith("QPB1|")){message("kioskPayStatus","QR PAYアプリの支払いバーコードを読み取ってください。");return;}
-     await stop();completePayment(decoded);
+   const scanWidth=Math.max(260,Math.min(680,Math.floor(window.innerWidth*.88)));
+   const scanHeight=Math.max(130,Math.min(220,Math.floor(scanWidth*.34)));
+   await scanner.start(
+    {facingMode:"environment"},
+    {fps:20,qrbox:{width:scanWidth,height:scanHeight},aspectRatio:1.7777778,formatsToSupport:formats,disableFlip:true},
+    async decoded=>{
+     const now=Date.now();
+     if(decoded===lastCode&&now-lastAt<1800)return;
+     lastCode=decoded;lastAt=now;
+     if(kind==="items"){
+      const p=products.find(x=>String(x.barcode||"").trim()===String(decoded).trim());
+      if(!p){message("kioskScanStatus","未登録の商品コードです。バーコード番号を確認してください。");return;}
+      addToCart(p.id);updateSummary();
+      message("kioskScanStatus","✓ 追加しました："+p.name+"　"+money(p.price)+"　続けてスキャンできます。");
+     }else{
+      if(!String(decoded).startsWith("QPB1|")){message("kioskPayStatus","QR PAYアプリの支払いバーコードを読み取ってください。");return;}
+      await stop();completePayment(decoded);
+     }
+    },()=>{});
+   try{
+    await scanner.applyVideoConstraints({advanced:[{focusMode:"continuous"}]});
+   }catch(e){}
+   try{
+    const settings=scanner.getRunningTrackSettings?.()||{};
+    if(settings.focusMode!=="continuous"){
+     try{await scanner.applyVideoConstraints({focusMode:"continuous"});}catch(e){}
     }
-   },()=>{});
-   try{await scanner.applyVideoConstraints({advanced:[{focusMode:"continuous"}]});}catch(e){}
-   message(kind==="items"?"kioskScanStatus":"kioskPayStatus",kind==="items"?"カメラ起動済み。商品バーコードをスキャンしてください。":"支払いバーコードをスキャンしてください。");
-  }catch(e){message(kind==="items"?"kioskScanStatus":"kioskPayStatus","カメラを起動できません。ブラウザのカメラ許可を確認してください。");}
+   }catch(e){}
+   message(kind==="items"?"kioskScanStatus":"kioskPayStatus",kind==="items"?"カメラ起動済み。バーコードを枠いっぱいに映してください。":"支払いバーコードを枠いっぱいに映してください。");
+  }catch(e){message(kind==="items"?"kioskScanStatus":"kioskPayStatus","カメラを起動できません。カメラ許可を確認するか、バーコード番号を入力してください。");}
  }
  function enter(mode){
   stage=mode;document.body.classList.add("self-kiosk-active");
