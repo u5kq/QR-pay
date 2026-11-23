@@ -73,14 +73,7 @@ footer{text-align:center;color:#888;font-size:11px;padding:20px}
  .receipt-items-head{grid-template-columns:minmax(0,1fr) 25mm 38mm}
  .receipt-row{grid-template-columns:minmax(0,1fr) 25mm 38mm}
 }
-@media print{
- @page{size:80mm auto;margin:5mm}
- body *{visibility:hidden!important}
- #receiptSection,#receiptSection *{visibility:visible!important}
- #receiptSection{display:block!important;position:absolute!important;left:0!important;top:0!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important}
- #receiptPrint{width:100%!important;max-width:none!important;padding:0!important;margin:0!important}
- .no-print{display:none!important}
-}
+/* A4 portrait print layout above is authoritative. */
 
 /* QR PAY V2 — Minimal White visual layer. Existing logic and storage remain unchanged. */
 :root{color-scheme:light}
@@ -178,6 +171,7 @@ footer{color:#999;padding:24px}
   <div class="total">合計：<span id="cartTotal">¥0</span></div>
   <div class="row">
     <button onclick="issueQR()" id="issueButton">QRコードを発行</button>
+    <button class="secondary" onclick="checkoutCash()" id="cashButton">現金で会計・レシート</button>
     <button class="secondary" onclick="clearCart()">カートを空にする</button>
     <button class="secondary" onclick="undoCart()" id="undoCartButton" disabled>直前の操作を取り消す</button>
   </div>
@@ -431,7 +425,7 @@ function issueQR(){
   type:"QR_PAY_DEMO",
   requestId,
   amount,
-  store:"DEMO STORE",
+  store:receiptSettings.name||"DEMO STORE",
   expiresAt
  };
 
@@ -439,7 +433,8 @@ function issueQR(){
  const record={
   requestId,
   amount,
-  store:"DEMO STORE",
+  store:receiptSettings.name||"DEMO STORE",
+  paymentMethod:"QR（デモ）",
   date:issuedAt,
   expiresAt,
   status:"issued",
@@ -466,6 +461,14 @@ function issueQR(){
  save();renderAll();
 }
 
+function checkoutCash(){
+ const amount=total();
+ if(!amount||amount>100000){alert("合計金額を確認してください。");return;}
+ if(!confirm("現金でのデモ会計として記録し、レシートを作成しますか？\\n実際の現金授受・決済は行いません。"))return;
+ const record={requestId:"CASH-"+crypto.randomUUID(),amount,store:receiptSettings.name||"DEMO STORE",date:new Date().toISOString(),status:"cash-demo",paymentMethod:"現金（デモ記録）",items:cart.map(item=>({name:item.name,price:item.price,qty:item.qty}))};
+ issued.unshift(record);cart=[];save();renderAll();
+ renderReceipt(record);document.getElementById("receiptSection").classList.remove("hidden");
+}
 function closeQR(){
  document.getElementById("qrSection").classList.add("hidden");
 }
@@ -493,8 +496,8 @@ function renderReceipt(record){
  if(receiptSettings.address)addText("div",receiptSettings.address,"receipt-center");
  if(receiptSettings.phone)addText("div","TEL："+receiptSettings.phone,"receipt-center");
  addText("div","TRANSACTION COPY","receipt-sub");
- addText("div","デモ取引 発行控え","receipt-center");
- addText("div","DEMO ONLY ・ 決済完了証明ではありません","receipt-stamp receipt-center");
+ addText("div",record.paymentMethod==="現金（デモ記録）"?"現金会計 デモ記録":"QRコード発行控え","receipt-center");
+ addText("div","DEMO ONLY ・ 実際の決済証明ではありません","receipt-stamp receipt-center");
  addText("div","","receipt-line");
  const meta1=document.createElement("div");meta1.className="receipt-meta";
  const d1=document.createElement("span");d1.textContent="発行日時";
@@ -506,7 +509,7 @@ function renderReceipt(record){
  meta2.append(m1,m2);area.appendChild(meta2);
  const meta3=document.createElement("div");meta3.className="receipt-meta";
  const m3=document.createElement("span");m3.textContent="ステータス";
- const m4=document.createElement("strong");m4.textContent=record.status==="cancelled"?"取消済み（デモ）":"QR発行済み・決済未確認";
+ const m4=document.createElement("strong");m4.textContent=record.status==="cancelled"?"取消済み（デモ）":record.paymentMethod==="現金（デモ記録）"?"現金会計（デモ記録）":"QR発行済み・決済未確認";
  meta3.append(m3,m4);area.appendChild(meta3);
  addText("div","","receipt-line");
  const head=document.createElement("div");head.className="receipt-items-head";
@@ -530,8 +533,8 @@ function renderReceipt(record){
  const totalLabel=document.createElement("span");totalLabel.textContent="合計金額";
  const totalValue=document.createElement("strong");totalValue.textContent=yen(record.amount);
  totalRow.append(totalLabel,totalValue);totalWrap.appendChild(totalRow);area.appendChild(totalWrap);
- addText("div","この控えはQRコード発行の記録です。","receipt-note");
- addText("div","実際の決済・返金・領収を証明するものではありません。","receipt-note");
+ addText("div",record.paymentMethod==="現金（デモ記録）"?"この控えは現金会計のデモ記録です。":"この控えはQRコード発行の記録です。","receipt-note");
+ addText("div","実際の決済・現金授受・返金・領収を証明するものではありません。","receipt-note");
  addText("div","","receipt-line");
  addText("div","ご利用ありがとうございます","receipt-center");
  addText("div","QR PAY DEMO SYSTEM","receipt-footer");
