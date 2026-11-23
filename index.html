@@ -124,6 +124,13 @@ nav{background:#fff!important;color:#111!important;border-top:1px solid #ddd!imp
 nav span{color:#111!important}
 a{color:#111!important}
 
+
+/* QR PAY V3 responsive refinements */
+@media(min-width:760px){main{max-width:760px}.actions button{min-height:66px}}
+input,select{font:inherit;border:1px solid #aaa;border-radius:10px;padding:12px;max-width:100%}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #777;outline-offset:2px}
+[aria-live]{min-height:1.2em}
+
 </style>
 </head>
 <body>
@@ -521,6 +528,62 @@ function showHistory() {
   `;
   qrFilterHistory();
 }
+
+
+/* QR PAY V3 customer tools — additive layer; legacy keys and records are preserved. */
+(function(){
+ const oldSettings=showSettings;
+ showSettings=function(){
+  oldSettings();
+  const box=document.getElementById("content");
+  if(!box)return;
+  const panel=document.createElement("section");
+  panel.className="panel";
+  panel.innerHTML='<h2>QR PAY V3 管理・安全設定</h2><label for="qrMonthlyBudget">月間デモ利用上限（円）</label><input id="qrMonthlyBudget" type="number" min="0" step="100" inputmode="numeric" placeholder="上限なし"><p class="note">端末内だけで動く目安です。実際の決済制限ではありません。</p><button class="secondary" onclick="qrV3SaveBudget()">上限を保存</button><button class="secondary" onclick="qrV3ExportCSV()">取引履歴CSV</button><button class="secondary" onclick="qrV3ImportBackup()">バックアップを復元</button><p id="qrV3SettingsMsg" class="note" aria-live="polite"></p>';
+  box.appendChild(panel);
+  const input=document.getElementById("qrMonthlyBudget");
+  if(input)input.value=localStorage.getItem("qrpay_v3_monthly_budget")||"";
+ };
+ window.qrV3SaveBudget=function(){
+  const el=document.getElementById("qrMonthlyBudget"),v=el?.value.trim()||"";
+  if(v!==""&&(!Number.isSafeInteger(Number(v))||Number(v)<0)){alert("0以上の整数で入力してください。");return;}
+  if(v==="")localStorage.removeItem("qrpay_v3_monthly_budget");
+  else localStorage.setItem("qrpay_v3_monthly_budget",String(Number(v)));
+  const msg=document.getElementById("qrV3SettingsMsg");if(msg)msg.textContent="月間目安を保存しました。";
+ };
+ window.qrV3ExportCSV=function(){
+  const rows=[["日時","店舗","金額","種別","状態","取引番号"],...JSON.parse(localStorage.getItem(historyKey)||"[]").map(x=>[x.date||"",x.store||"",Number(x.amount||0),x.type==="topup"?"デモチャージ":"デモ決済",x.status||"完了",x.requestId||""])];
+  const csv="\uFEFF"+rows.map(r=>r.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\r\n");
+  const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));const a=document.createElement("a");a.href=url;a.download="qrpay-wallet-history.csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ };
+ window.qrV3ImportBackup=function(){
+  const picker=document.createElement("input");picker.type="file";picker.accept="application/json";
+  picker.onchange=async()=>{
+   const file=picker.files?.[0];if(!file)return;
+   try{
+    const data=JSON.parse(await file.text());
+    if(data.type!=="QR_PAY_DEMO_BACKUP"||!Number.isSafeInteger(Number(data.balance))||Number(data.balance)<0||!Array.isArray(data.history)||!data.history.every(x=>x&&typeof x==="object"&&typeof x.requestId==="string"&&Number.isFinite(Number(x.amount))))throw new Error("形式が一致しません");
+    if(!confirm("現在の端末内の残高・履歴をバックアップ内容で置き換えますか？先に現在のデータをバックアップしてください。"))return;
+    localStorage.setItem(balanceKey,String(Number(data.balance)));localStorage.setItem(historyKey,JSON.stringify(data.history));
+    if(Array.isArray(data.favorites))localStorage.setItem(qrFavoritesKey,JSON.stringify(data.favorites.filter(x=>typeof x==="string")));
+    showBalance();showHome();alert("デモデータを復元しました。");
+   }catch(e){alert("復元できませんでした："+e.message);}
+  };picker.click();
+ };
+ const oldConfirm=confirmDemoPayment;
+ confirmDemoPayment=function(){
+  const data=window.pendingDemoPayment;if(!data)return oldConfirm();
+  const budget=Number(localStorage.getItem("qrpay_v3_monthly_budget")||0);
+  if(budget>0){
+   const now=new Date(),spent=JSON.parse(localStorage.getItem(historyKey)||"[]").filter(x=>x.type!=="topup"&&x.status!=="cancelled").filter(x=>{const d=new Date(x.date);return !isNaN(d)&&d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth();}).reduce((n,x)=>n+Number(x.amount||0),0);
+   if(spent+Number(data.amount)>budget){alert("設定した月間デモ利用上限を超えるため、このデモ決済は実行できません。");return;}
+   if(spent+Number(data.amount)>=budget*.8)alert("月間デモ利用上限の80%に達する見込みです。");
+  }
+  oldConfirm();
+ };
+ const baseHome=showHome;
+ showHome=function(){baseHome();const history=JSON.parse(localStorage.getItem(historyKey)||"[]");const now=new Date();const spent=history.filter(x=>x.type!=="topup"&&x.status!=="cancelled").filter(x=>{const d=new Date(x.date);return !isNaN(d)&&d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth();}).reduce((n,x)=>n+Number(x.amount||0),0);const budget=Number(localStorage.getItem("qrpay_v3_monthly_budget")||0);const target=document.getElementById("content");if(target&&!document.getElementById("qrV3BudgetCard")){const card=document.createElement("section");card.id="qrV3BudgetCard";card.className="panel";card.innerHTML='<h2>今月の利用ペース</h2><strong>'+("¥"+spent.toLocaleString("ja-JP"))+'</strong><p class="note">'+(budget>0?"設定上限 ¥"+budget.toLocaleString("ja-JP")+" ／ 残り ¥"+Math.max(0,budget-spent).toLocaleString("ja-JP"):"上限未設定")+'</p>';target.appendChild(card);}};
+})();
 
 </script>
 
