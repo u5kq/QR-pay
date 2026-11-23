@@ -1884,6 +1884,45 @@ renderAll();
  const style=document.createElement("style");style.textContent="#posSoundControl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 12px;border:1px solid #e5e5e0;border-radius:12px;background:#fff;margin:8px 0 12px;width:max-content;max-width:100%;box-shadow:0 3px 12px #00000006}#posSoundControl .pos-sound-icon{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:#f1f1ee;font-size:17px}#posSoundControl .pos-sound-copy{min-width:75px}#posSoundControl strong,#posSoundControl small{display:block}#posSoundControl strong{font-size:11px}#posSoundControl small{font-size:9px;color:#888;margin-top:2px}#posSoundControl button{border:1px solid #deded9;background:#fff;border-radius:8px;padding:7px 10px;font-size:10px;font-weight:750}#posSoundControl button.active{background:#171717;color:#fff;border-color:#171717}body.self-kiosk-active #posSoundControl{display:none}@media(max-width:600px){#posSoundControl{width:100%;justify-content:flex-start}}";document.head.appendChild(style);paint();
 })();
 
+/* V5.3 cashier workflow: cash shortcuts, barcode Enter, safe keyboard navigation, add-to-cart feedback. */
+(function(){
+ const cart=document.getElementById("posCart"),cash=document.getElementById("cashTendered"),barcode=document.getElementById("barcodeSearch");
+ if(!cart)return;
+ if(cash&&!document.getElementById("posCashQuick")){
+  const box=document.createElement("div");box.id="posCashQuick";
+  box.innerHTML='<div class="pos-cashquick-head"><strong>お預かり金額をすばやく入力</strong><small>合計金額に合わせた入力もできます</small></div><div class="pos-cashquick-buttons"><button type="button" data-cash="exact">ちょうど</button><button type="button" data-cash="1000">+1,000円</button><button type="button" data-cash="5000">+5,000円</button><button type="button" data-cash="10000">+10,000円</button><button type="button" data-cash="clear">クリア</button></div>';
+  cash.insertAdjacentElement("afterend",box);
+  box.addEventListener("click",e=>{const b=e.target.closest("button[data-cash]");if(!b)return;const v=b.dataset.cash;const amount=v==="exact"?total():v==="clear"?"":total()+Number(v);cash.value=amount;cash.dispatchEvent(new Event("input",{bubbles:true}));cash.focus();});
+ }
+ if(barcode&&!barcode.dataset.v53Enter){
+  barcode.dataset.v53Enter="1";
+  barcode.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();lookupBarcode();barcode.select();}});
+ }
+ // Add a gentle confirmation cue for manual product selection too.
+ if(typeof window.addToCart==="function"&&!window.__v53AddSound){
+  const original=window.addToCart;
+  window.addToCart=function(){const before=cart?.querySelectorAll(".cart-item").length||0;const result=original.apply(this,arguments);window.qrPaySound?.("scan");return result;};
+  window.__v53AddSound=true;
+ }
+ // Keyboard shortcuts only fire outside text-entry controls.
+ if(!window.__v53Keys){
+  document.addEventListener("keydown",e=>{
+   if(e.altKey||e.ctrlKey||e.metaKey)return;
+   const t=e.target,typing=t&&(t.matches("input,textarea,select")||t.isContentEditable);
+   if(typing)return;
+   if(e.key==="F4"){e.preventDefault();cash?.focus();cash?.select();}
+   if(e.key==="F6"){e.preventDefault();document.getElementById("issueButton")?.click();}
+   if(e.key==="F8"){e.preventDefault();document.getElementById("cashButton")?.click();}
+  });
+  window.__v53Keys=true;
+ }
+ const info=document.createElement("div");info.className="pos-cash-shortcut-note";info.textContent="F2 商品検索　・　F3 バーコード　・　F4 お預かり金額　・　F6 QR発行　・　F8 現金会計";
+ const target=document.querySelector("#posCart .pos-main-actions")||document.getElementById("posCart");
+ if(target&&!document.querySelector(".pos-cash-shortcut-note"))target.insertAdjacentElement("afterend",info);
+ const style=document.createElement("style");style.textContent="#posCashQuick{margin:8px 0 12px;padding:10px;border:1px solid #e7e7e2;border-radius:10px;background:#fafaf8}#posCashQuick .pos-cashquick-head strong,#posCashQuick .pos-cashquick-head small{display:block}#posCashQuick .pos-cashquick-head strong{font-size:11px}#posCashQuick .pos-cashquick-head small{font-size:10px;color:#888;margin-top:3px}#posCashQuick .pos-cashquick-buttons{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}#posCashQuick button{border:1px solid #deded9;background:#fff;color:#333;border-radius:8px;padding:8px 10px;font-size:11px;font-weight:750}#posCashQuick button:first-child{background:#171717;color:#fff;border-color:#171717}.pos-cash-shortcut-note{font-size:10px;color:#888;line-height:1.6;margin:8px 2px}#barcodeSearch:focus,#cashTendered:focus,#productFilter:focus{outline:2px solid #888;outline-offset:2px}";
+ document.head.appendChild(style);
+})();
+
 </script>
 </body>
 </html>
