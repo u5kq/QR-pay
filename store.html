@@ -2061,5 +2061,35 @@ renderAll();
 })();
 
 </script>
+<script>
+/* V5.7 KIOSK UX POLISH — self-checkout only. Staff POS is intentionally untouched. */
+(function(){
+ const root=document.getElementById("selfKiosk");if(!root)return;
+ root.querySelectorAll(".acceptance-map").forEach(node=>node.remove());
+ const top=root.querySelector(".kiosk-top");
+ if(top&&!document.getElementById("kioskHelpButton")){
+  const actions=document.createElement("div");actions.className="kiosk-header-actions";
+  const help=document.createElement("button");help.type="button";help.id="kioskHelpButton";help.className="kiosk-help-button";help.textContent="スタッフを呼ぶ";
+  const exit=document.getElementById("kioskExit");if(exit){top.insertBefore(actions,exit);actions.append(help);}
+  help.addEventListener("click",()=>openDialog("help"));
+ }
+ const dialog=document.createElement("div");dialog.id="kioskAssistDialog";dialog.hidden=true;dialog.innerHTML='<div class="kiosk-dialog-backdrop" data-dismiss="1"></div><section class="kiosk-dialog-card" role="dialog" aria-modal="true" aria-labelledby="kioskDialogTitle"><button type="button" class="kiosk-dialog-close" aria-label="閉じる" data-dismiss="1">×</button><div class="kiosk-eyebrow">QR PAY ASSISTANCE</div><h2 id="kioskDialogTitle">スタッフサポート</h2><p id="kioskDialogText">操作にお困りですか？スタッフにお声がけください。</p><div class="kiosk-dialog-actions"><button type="button" class="kiosk-secondary" id="kioskDialogCancel">閉じる</button><button type="button" class="kiosk-primary" id="kioskDialogConfirm">確認しました</button></div></section>';
+ root.append(dialog);
+ let dialogMode="help";
+ function openDialog(mode){dialogMode=mode;const title=dialog.querySelector("#kioskDialogTitle"),copy=dialog.querySelector("#kioskDialogText"),confirm=dialog.querySelector("#kioskDialogConfirm");if(mode==="exit"){title.textContent="セルフレジを終了しますか？";copy.textContent="レジ版に戻ります。読み取り中の内容は保持されません。";confirm.textContent="レジ版に戻る";}else if(mode==="cancel"){title.textContent="お買い物を中止しますか？";copy.textContent="現在の買い物かごを空にして、スタート画面へ戻ります。";confirm.textContent="中止して戻る";}else{title.textContent="スタッフサポート";copy.textContent="操作にお困りですか？近くのスタッフにお声がけください。";confirm.textContent="確認しました";}dialog.hidden=false;confirm.focus();}
+ function closeDialog(){dialog.hidden=true;}
+ dialog.addEventListener("click",e=>{if(e.target.closest("[data-dismiss]"))closeDialog();});
+ dialog.querySelector("#kioskDialogCancel").addEventListener("click",closeDialog);
+ dialog.querySelector("#kioskDialogConfirm").addEventListener("click",async()=>{const mode=dialogMode;closeDialog();if(mode==="exit"){await window.qrPaySelfKiosk?.stop?.();document.body.classList.remove("self-kiosk-active","self-mode");document.getElementById("qrStaffMode")?.click();}else if(mode==="cancel"){await window.qrPaySelfKiosk?.stop?.();const back=document.getElementById("kioskBackWelcome");if(back){back.dataset.v57Confirmed="1";back.click();delete back.dataset.v57Confirmed;}}});
+ const exit=document.getElementById("kioskExit");if(exit)exit.addEventListener("click",e=>{e.preventDefault();e.stopImmediatePropagation();openDialog("exit");},true);
+ const back=document.getElementById("kioskBackWelcome");if(back)back.addEventListener("click",e=>{if(back.dataset.v57Confirmed==="1")return;e.preventDefault();e.stopImmediatePropagation();openDialog("cancel");},true);
+ const manual=document.getElementById("kioskManualBarcode"),manualAdd=document.getElementById("kioskManualAdd");
+ if(manual&&manualAdd){manual.setAttribute("aria-label","商品バーコード番号");manual.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();manualAdd.click();}});}
+ const newCustomer=document.getElementById("kioskNewCustomer");if(newCustomer)newCustomer.addEventListener("click",async()=>{await window.qrPaySelfKiosk?.stop?.();const input=document.getElementById("kioskManualBarcode");if(input)input.value="";const cash=document.getElementById("kioskCashTendered");if(cash)cash.value="";});
+ const css=document.createElement("style");css.id="v57-kiosk-ux-style";css.textContent="#selfKiosk .kiosk-header-actions{display:flex;align-items:center;gap:9px;margin-left:auto;margin-right:10px}#selfKiosk .kiosk-help-button{min-height:38px;padding:0 14px;border:1px solid #d8d8d2;border-radius:9px;background:#fff;color:#292929;font-size:11px;font-weight:750}#selfKiosk .kiosk-help-button:hover,#selfKiosk .kiosk-secondary:hover{background:#f1f1ed}#selfKiosk #kioskAssistDialog[hidden]{display:none!important}#selfKiosk #kioskAssistDialog{position:fixed;inset:0;z-index:100010;display:grid;place-items:center;padding:20px}#selfKiosk .kiosk-dialog-backdrop{position:absolute;inset:0;background:#10101088;backdrop-filter:blur(3px)}#selfKiosk .kiosk-dialog-card{position:relative;width:min(460px,100%);padding:30px;border:1px solid #e1e1dc;border-radius:18px;background:#fff;box-shadow:0 22px 70px #0003}#selfKiosk .kiosk-dialog-card h2{margin:8px 0;font-size:23px;letter-spacing:-.5px}#selfKiosk .kiosk-dialog-card p{color:#70706a;font-size:13px;line-height:1.8;margin:0 0 22px}#selfKiosk .kiosk-dialog-close{position:absolute;right:14px;top:12px;border:0;background:transparent;font-size:25px;color:#777}#selfKiosk .kiosk-dialog-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}#selfKiosk .kiosk-dialog-actions button{min-height:48px}#selfKiosk .kiosk-dialog-actions .kiosk-primary{margin:0}#selfKiosk .kiosk-scan-status{min-height:42px;display:flex;align-items:center;padding:10px 13px;line-height:1.55}#selfKiosk .kiosk-input:focus-visible,#selfKiosk button:focus-visible{outline:3px solid #888;outline-offset:2px}@media(max-width:600px){#selfKiosk .kiosk-help-button{padding:0 9px;font-size:10px}#selfKiosk .kiosk-dialog-card{padding:25px 20px}#selfKiosk .kiosk-dialog-actions{grid-template-columns:1fr}}";
+ document.head.appendChild(css);
+})();
+</script>
+
 </body>
 </html>
