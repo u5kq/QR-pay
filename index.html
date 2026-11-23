@@ -12,18 +12,14 @@ body {
   margin: 0;
   background: #f4f4f4;
   color: #111;
-  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
 header {
   background: #111;
   color: white;
   padding: 24px 22px 30px;
 }
-.logo {
-  font-size: 25px;
-  font-weight: 900;
-  letter-spacing: 2px;
-}
+.logo { font-size: 25px; font-weight: 900; letter-spacing: 2px; }
 .demo { color: #aaa; font-size: 11px; letter-spacing: 2px; }
 main { padding: 20px; max-width: 500px; margin: auto; }
 .balance {
@@ -55,15 +51,9 @@ button {
   padding: 20px;
   border-radius: 16px;
   margin-top: 16px;
+  overflow-wrap: anywhere;
 }
 h2 { font-size: 17px; }
-.item {
-  display: flex;
-  justify-content: space-between;
-  padding: 14px 0;
-  border-bottom: 1px solid #eee;
-  font-size: 14px;
-}
 .note { color: #888; font-size: 11px; }
 nav {
   display: flex;
@@ -74,9 +64,12 @@ nav {
   bottom: 0;
 }
 nav span { font-size: 12px; }
+#reader { width: 100%; max-width: 400px; margin: 16px auto; }
+#scanResult { margin-top: 16px; }
 </style>
 </head>
 <body>
+
 <header>
   <div class="logo">QR PAY</div>
   <div class="demo">DEMO PAYMENT SYSTEM</div>
@@ -110,142 +103,189 @@ nav span { font-size: 12px; }
   <span>履歴</span>
   <span>設定</span>
 </nav>
-<script src="https://unpkg.com/html5-qrcode"></script>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
 <script>
+let activeScanner = null;
+
+const balanceKey = "qrpay_demo_balance";
+const historyKey = "qrpay_demo_history";
+
+function getBalance() {
+  return Number(localStorage.getItem(balanceKey) ?? 10000);
+}
+
+function showBalance() {
+  document.getElementById("balance").textContent =
+    "¥" + getBalance().toLocaleString("ja-JP");
+}
+
+showBalance();
+
 function showPayment() {
   document.getElementById("content").innerHTML =
     "<h2>支払い用バーコード</h2>" +
     "<p>バーコード機能は次の開発工程で実装します。</p>";
-} 
-  function showScanner() {
-    document.getElementById("content").innerHTML = `
-        <h2>QRコード読み取り</h2>
-        <p>店舗のQRコードを読み取ってください。</p>
-        <div id="reader" style="width:100%; max-width:400px;"></div>
-        <div id="scanResult"></div>
-    `;
-
-    const scanner = new Html5Qrcode("reader");
-
-    scanner.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
-        async function(decodedText) {
-            await scanner.stop();
-
-            const result = document.getElementById("scanResult");
-
-            try {
-                const data = JSON.parse(decodedText);
-
-                if (
-                    data.type !== "QR_PAY_DEMO" ||
-                    typeof data.amount !== "number" ||
-                    !Number.isFinite(data.amount) ||
-                    data.amount <= 0 ||
-                    typeof data.store !== "string" ||
-                    typeof data.expiresAt !== "number"
-                ) {
-                    throw new Error("QRコードの内容が正しくありません。");
-                }
-
-                if (Date.now() > data.expiresAt) {
-                    throw new Error("このQRコードは有効期限切れです。");
-                }
-
-               window.pendingDemoPayment = data;
-              result.innerHTML = `
-                    <h3>読み取り成功</h3>
-                    <p>店舗名：<span id="storeName"></span></p>
-                    <p>決済金額：<span id="paymentAmount"></span></p>
-                    <p>状態：未決済（デモ）</p>
-                    <button onclick="confirmDemoPayment()">この内容で決済する</button>
-                `;
-
-                document.getElementById("storeName").textContent = data.store;
-                document.getElementById("paymentAmount").textContent =
-                    "¥" + data.amount.toLocaleString("ja-JP");
-
-            } catch (error) {
-                result.textContent = error.message;
-            }
-        },
-        
-function confirmDemoPayment() {
-    const data = window.pendingDemoPayment;
-
-    if (!data) {
-        alert("決済情報がありません。");
-        return;
-    }
-
-    const balance = Number(
-        localStorage.getItem("qrpay_demo_balance") ?? 10000
-    );
-
-    const history = JSON.parse(
-        localStorage.getItem("qrpay_demo_history") || "[]"
-    );
-
-    if (history.some(item => item.requestId === data.requestId)) {
-        alert("このQRコードは使用済みです。");
-        return;
-    }
-
-    if (balance < data.amount) {
-        alert("デモ残高が不足しています。");
-        return;
-    }
-
-    if (!confirm("デモ決済を完了しますか？\n実際のお金は動きません。")) {
-        return;
-    }
-
-    const newBalance = balance - data.amount;
-
-    history.unshift({
-        requestId: data.requestId,
-        store: data.store,
-        amount: data.amount,
-        date: new Date().toLocaleString("ja-JP")
-    });
-
-    localStorage.setItem("qrpay_demo_balance", newBalance);
-    localStorage.setItem("qrpay_demo_history", JSON.stringify(history));
-
-    document.getElementById("balance").textContent =
-        "¥" + newBalance.toLocaleString("ja-JP");
-
-    document.getElementById("scanResult").innerHTML = `
-        <h3>デモ決済完了</h3>
-        <p>店舗：${data.store}</p>
-        <p>決済金額：¥${data.amount.toLocaleString("ja-JP")}</p>
-        <p>残高：¥${newBalance.toLocaleString("ja-JP")}</p>
-        <p>取引履歴に保存しました。</p>
-    `;
-
-    window.pendingDemoPayment = null;
 }
 
+async function showScanner() {
+  const content = document.getElementById("content");
 
+  if (activeScanner) {
+    try {
+      await activeScanner.stop();
+      activeScanner.clear();
+    } catch (e) {}
+    activeScanner = null;
+  }
 
-function confirmDemoPayment() {
-const confirmed = confirm(
-    "これはデモ決済です。\n実際のお金は動きません。\n決済を完了しますか？"
-);
+  content.innerHTML = `
+    <h2>QRコード読み取り</h2>
+    <p>店舗のQRコードを読み取ってください。</p>
+    <div id="reader"></div>
+    <div id="scanResult"></div>
+    <button onclick="showScanner()">再読み込み</button>
+  `;
 
-if (!confirmed) {
+  if (typeof Html5Qrcode === "undefined") {
+    document.getElementById("scanResult").textContent =
+      "読み取りライブラリを読み込めませんでした。";
     return;
+  }
+
+  const scanner = new Html5Qrcode("reader");
+  activeScanner = scanner;
+
+  try {
+    await scanner.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      async function(decodedText) {
+        try {
+          await scanner.stop();
+        } catch (e) {}
+
+        activeScanner = null;
+
+        const result = document.getElementById("scanResult");
+
+        try {
+          const data = JSON.parse(decodedText);
+
+          if (
+            data.type !== "QR_PAY_DEMO" ||
+            typeof data.requestId !== "string" ||
+            typeof data.amount !== "number" ||
+            !Number.isFinite(data.amount) ||
+            data.amount <= 0 ||
+            data.amount > 100000 ||
+            typeof data.store !== "string" ||
+            typeof data.expiresAt !== "number"
+          ) {
+            throw new Error("QRコードの内容が正しくありません。");
+          }
+
+          if (Date.now() > data.expiresAt) {
+            throw new Error("このQRコードは有効期限切れです。");
+          }
+
+          window.pendingDemoPayment = data;
+
+          result.innerHTML = `
+            <h3>読み取り成功</h3>
+            <p>店舗名：<span id="storeName"></span></p>
+            <p>決済金額：<span id="paymentAmount"></span></p>
+            <p>状態：未決済（デモ）</p>
+            <button onclick="confirmDemoPayment()">
+              この内容で決済する
+            </button>
+          `;
+
+          document.getElementById("storeName").textContent = data.store;
+          document.getElementById("paymentAmount").textContent =
+            "¥" + data.amount.toLocaleString("ja-JP");
+
+        } catch (error) {
+          result.textContent = error.message;
+        }
+      },
+      function(errorMessage) {
+        // 読み取り途中のエラーは表示しない
+      }
+    );
+
+  } catch (error) {
+    activeScanner = null;
+    document.getElementById("scanResult").textContent =
+      "カメラを起動できませんでした。カメラの許可と通信環境を確認してください。";
+  }
 }
 
-const result = document.getElementById("scanResult");
+function confirmDemoPayment() {
+  const data = window.pendingDemoPayment;
 
-result.innerHTML = `
+  if (!data) {
+    alert("決済情報がありません。");
+    return;
+  }
+
+  const history = JSON.parse(
+    localStorage.getItem(historyKey) || "[]"
+  );
+
+  if (history.some(item => item.requestId === data.requestId)) {
+    alert("このQRコードは使用済みです。");
+    return;
+  }
+
+  const balance = getBalance();
+
+  if (balance < data.amount) {
+    alert("デモ残高が不足しています。");
+    return;
+  }
+
+  if (!confirm(
+    "これはデモ決済です。\n実際のお金は動きません。\n決済を完了しますか？"
+  )) {
+    return;
+  }
+
+  if (Date.now() > data.expiresAt) {
+    alert("QRコードの有効期限が切れています。");
+    return;
+  }
+
+  const newBalance = balance - data.amount;
+
+  history.unshift({
+    requestId: data.requestId,
+    store: data.store,
+    amount: data.amount,
+    date: new Date().toLocaleString("ja-JP")
+  });
+
+  localStorage.setItem(balanceKey, String(newBalance));
+  localStorage.setItem(historyKey, JSON.stringify(history));
+
+  showBalance();
+
+  const result = document.getElementById("scanResult");
+  result.innerHTML = `
     <h3>デモ決済完了</h3>
-    <p>決済の確認が完了しました。</p>
-    <p>実際のお金は動いていません。</p>
-`;
+    <p id="paidStore"></p>
+    <p>決済金額：¥${data.amount.toLocaleString("ja-JP")}</p>
+    <p>残高：¥${newBalance.toLocaleString("ja-JP")}</p>
+    <p>取引履歴に保存しました。</p>
+  `;
+
+  document.getElementById("paidStore").textContent =
+    "店舗：" + data.store;
+
+  window.pendingDemoPayment = null;
 }
 </script>
+
 </body>
 </html>
