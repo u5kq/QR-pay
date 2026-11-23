@@ -1923,6 +1923,68 @@ renderAll();
  document.head.appendChild(style);
 })();
 
+/* V5.4 operations dashboard: stock threshold, quick history filters, and cashier status tools. */
+(function(){
+ const STORE="qrpay_v54_stock_threshold";let threshold=Number(localStorage.getItem(STORE)||5);
+ let historyMode="all";
+ const main=document.querySelector("main"),history=document.getElementById("historyList"),filter=document.getElementById("historyFilter");
+ const catalog=document.getElementById("productList");
+ if(!main||!history||!catalog)return;
+ const tools=document.createElement("section");tools.id="posOpsPanel";
+ tools.innerHTML='<div class="pos-ops-title"><div><span class="pos-ops-kicker">STORE OPERATIONS</span><h2>店舗オペレーション</h2><p>在庫と取引状況をすばやく確認</p></div><span class="pos-ops-live">● DEMO SYSTEM</span></div><div class="pos-ops-metrics"><div><small>登録商品</small><strong id="v54ProductCount">—</strong></div><div><small>在庫注意</small><strong id="v54LowCount">—</strong></div><div><small>本日のデモ会計</small><strong id="v54TodayCount">—</strong></div><div><small>本日のデモ合計</small><strong id="v54TodaySales">—</strong></div></div><div class="pos-ops-bottom"><label>在庫注意の基準 <select id="v54Threshold"><option value="0">在庫0個</option><option value="3">3個以下</option><option value="5">5個以下</option><option value="10">10個以下</option></select></label><button type="button" id="v54FocusBarcode">バーコード入力へ</button><button type="button" id="v54Refresh">情報を更新</button></div><div id="v54StockNotice" aria-live="polite"></div>';
+ const posHub=document.getElementById("posCheckoutHub")||document.getElementById("posWorkspace");
+ if(posHub)posHub.insertAdjacentElement("beforebegin",tools);else main.prepend(tools);
+ const thresholdSelect=tools.querySelector("#v54Threshold");thresholdSelect.value=String([0,3,5,10].includes(threshold)?threshold:5);
+ thresholdSelect.addEventListener("change",()=>{threshold=Number(thresholdSelect.value);localStorage.setItem(STORE,String(threshold));refresh();});
+ tools.querySelector("#v54Refresh").addEventListener("click",refresh);
+ tools.querySelector("#v54FocusBarcode").addEventListener("click",()=>{const el=document.getElementById("barcodeSearch");el?.scrollIntoView({behavior:"smooth",block:"center"});el?.focus();});
+ function refresh(){
+  const list=Array.isArray(products)?products:[],sales=(issued||[]).filter(x=>["cash-demo","barcode-demo"].includes(x.status));
+  const today=new Date().toLocaleDateString("sv-SE"),todaySales=sales.filter(x=>new Date(x.date).toLocaleDateString("sv-SE")===today);
+  const low=list.filter(p=>Number.isInteger(p.stock)&&p.stock<=threshold);
+  tools.querySelector("#v54ProductCount").textContent=list.length+"点";
+  tools.querySelector("#v54LowCount").textContent=low.length+"点";
+  tools.querySelector("#v54TodayCount").textContent=todaySales.length+"件";
+  tools.querySelector("#v54TodaySales").textContent="¥"+todaySales.reduce((n,x)=>n+Number(x.amount||0),0).toLocaleString("ja-JP");
+  const notice=tools.querySelector("#v54StockNotice");notice.innerHTML="";
+  if(!low.length){notice.textContent="在庫注意の商品はありません。";notice.className="pos-stock-ok";}
+  else{notice.className="pos-stock-alert";const title=document.createElement("strong");title.textContent="在庫確認が必要な商品";const names=document.createElement("div");names.textContent=low.map(p=>p.name+"（"+p.stock+"個）").join(" ／ ");notice.append(title,names);}
+  decorateStock();
+ }
+ function decorateStock(){
+  catalog.querySelectorAll(".product").forEach(card=>{
+   const name=card.querySelector("strong")?.textContent||"",p=products.find(x=>x.name===name);if(!p||!Number.isInteger(p.stock))return;
+   const add=[...card.querySelectorAll("button")].find(b=>b.textContent.includes("カートに追加"));
+   if(p.stock<=0){card.classList.add("pos-out-of-stock");if(add){add.disabled=true;add.textContent="在庫切れ";}}
+   else if(p.stock<=threshold)card.classList.add("pos-low-stock");else card.classList.remove("pos-low-stock","pos-out-of-stock");
+  });
+ }
+ if(typeof window.renderProducts==="function"&&!window.__v54ProductWrap){const original=window.renderProducts;window.renderProducts=function(){original.apply(this,arguments);decorateStock();};window.__v54ProductWrap=true;}
+ if(typeof window.renderAll==="function"&&!window.__v54AllWrap){const original=window.renderAll;window.renderAll=function(){original.apply(this,arguments);refresh();};window.__v54AllWrap=true;}
+ // Quick transaction filters are applied after the existing search filter, preserving its behavior.
+ const historyTools=document.createElement("div");historyTools.id="v54HistoryTools";
+ historyTools.innerHTML='<div class="v54-history-head"><strong>取引履歴フィルター</strong><span id="v54HistoryCount"></span></div><div class="v54-history-chips"><button data-mode="all" class="active">すべて</button><button data-mode="today">今日</button><button data-mode="cash">現金デモ</button><button data-mode="barcode">バーコードデモ</button><button data-mode="qr">QR発行</button><button data-mode="cancelled">取消済み</button></div>';
+ history.insertAdjacentElement("beforebegin",historyTools);
+ function applyHistory(){
+  const rows=[...history.children],today=new Date().toLocaleDateString("sv-SE");let shown=0;
+  rows.forEach((row,i)=>{const item=issued[i];if(!item)return;let ok=true;
+   if(historyMode==="today")ok=new Date(item.date).toLocaleDateString("sv-SE")===today;
+   if(historyMode==="cash")ok=item.status==="cash-demo";
+   if(historyMode==="barcode")ok=item.status==="barcode-demo";
+   if(historyMode==="qr")ok===item.status==="issued";
+   if(historyMode==="cancelled")ok=item.status==="cancelled";
+   row.hidden=!ok;if(ok)shown++;
+  });
+  historyTools.querySelector("#v54HistoryCount").textContent=shown+"件表示";
+  historyTools.querySelectorAll("button").forEach(b=>b.classList.toggle("active",b.dataset.mode===historyMode));
+ }
+ historyTools.addEventListener("click",e=>{const b=e.target.closest("button[data-mode]");if(!b)return;historyMode=b.dataset.mode;applyHistory();});
+ if(typeof window.renderHistory==="function"&&!window.__v54HistoryWrap){const original=window.renderHistory;window.renderHistory=function(){original.apply(this,arguments);applyHistory();};window.__v54HistoryWrap=true;}
+ const style=document.createElement("style");style.textContent="#posOpsPanel{background:#fff;border:1px solid #e2e2dd;border-radius:16px;padding:16px;margin:0 0 14px;box-shadow:0 5px 20px #00000006}.pos-ops-title{display:flex;align-items:center;justify-content:space-between;gap:12px}.pos-ops-kicker{font-size:9px;letter-spacing:1.6px;color:#888;font-weight:850}.pos-ops-title h2{font-size:17px;margin:4px 0}.pos-ops-title p{font-size:10px;color:#888;margin:0}.pos-ops-live{font-size:9px;color:#777;border:1px solid #e5e5e0;border-radius:30px;padding:7px 9px;white-space:nowrap}.pos-ops-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:14px 0}.pos-ops-metrics>div{background:#f7f7f5;border:1px solid #ededE9;border-radius:10px;padding:10px}.pos-ops-metrics small,.pos-ops-metrics strong{display:block}.pos-ops-metrics small{font-size:10px;color:#888}.pos-ops-metrics strong{font-size:19px;margin-top:4px}.pos-ops-bottom{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.pos-ops-bottom label{font-size:10px;color:#777}.pos-ops-bottom select,.pos-ops-bottom button{border:1px solid #ddd;border-radius:8px;background:#fff;padding:8px 10px;font-size:11px}.pos-stock-ok,.pos-stock-alert{margin-top:10px;padding:9px 11px;border-radius:9px;font-size:11px;background:#f7f7f5;color:#666}.pos-stock-alert{background:#f6f3ed;color:#66512d}.pos-stock-alert strong{display:block;margin-bottom:3px}.pos-low-stock{border-color:#c7b58f!important}.pos-out-of-stock{opacity:.58}.pos-out-of-stock button:disabled{background:#eee;color:#888;cursor:not-allowed}#v54HistoryTools{margin:10px 0;padding:12px;border:1px solid #e6e6e1;border-radius:11px;background:#fafaf8}.v54-history-head{display:flex;justify-content:space-between;font-size:11px;margin-bottom:8px}.v54-history-head span{color:#888}.v54-history-chips{display:flex;gap:6px;flex-wrap:wrap}.v54-history-chips button{border:1px solid #ddd;border-radius:20px;padding:7px 10px;background:#fff;font-size:10px}.v54-history-chips button.active{background:#171717;color:#fff;border-color:#171717}#historyList>[hidden]{display:none!important}@media(max-width:600px){.pos-ops-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.pos-ops-title{align-items:flex-start}}";
+ document.head.appendChild(style);
+ refresh();
+})();
+
 </script>
 </body>
 </html>
