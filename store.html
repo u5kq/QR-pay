@@ -159,6 +159,58 @@ input,select,textarea{background:#fff!important;color:#111!important;border:1px 
 .metric,.status,.notice{background:#eee!important;color:#111!important;border-color:#ddd!important}
 a{color:#111!important}
 
+
+/* iPad-first POS layout: landscape checkout workspace */
+@media screen and (min-width:900px) and (orientation:landscape){
+ html,body{min-height:100%;background:#f1f1f1!important}
+ header{position:sticky;top:0;z-index:30;padding:15px 26px!important;display:flex;align-items:center;justify-content:space-between;min-height:66px}
+ header h1{font-size:22px!important}
+ header p{margin:0!important;font-size:11px}
+ main{
+  width:100%;max-width:1440px!important;margin:0 auto!important;padding:18px 22px 30px!important;
+  display:grid!important;grid-template-columns:minmax(0,1.35fr) minmax(350px,.85fr)!important;
+  grid-template-rows:auto auto auto auto;gap:14px!important;align-items:start
+ }
+ main>section{margin:0!important;min-width:0;padding:18px!important}
+ main>section:nth-child(1){grid-column:1/-1;grid-row:1}
+ main>section:nth-child(5){grid-column:1;grid-row:2/span 2;min-height:480px}
+ main>section:nth-child(6){grid-column:2;grid-row:2/span 2;position:sticky;top:82px;max-height:calc(100vh - 100px);overflow:auto}
+ main>section:nth-child(2){grid-column:1/-1;grid-row:4}
+ main>section:nth-child(3){grid-column:1;grid-row:5}
+ main>section:nth-child(4){grid-column:2;grid-row:5}
+ main>section:nth-child(7),main>section:nth-child(8),main>section:nth-child(9),main>section:nth-child(10){grid-column:1/-1}
+ #productList{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:12px!important}
+ .product{padding:16px!important;min-height:142px;display:flex;flex-direction:column;justify-content:space-between}
+ .product button{min-height:48px;font-size:15px}
+ #cartList{max-height:38vh;overflow:auto}
+ .cart-item{padding:15px 0}
+ .qty button{min-width:42px;min-height:42px}
+ .total{font-size:30px;margin:18px 0}
+ #issueButton,#cashButton{min-height:54px;font-size:16px}
+ main>section:nth-child(6)>.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ main>section:nth-child(6)>.row button{min-width:0}
+ input{min-height:46px;font-size:16px}
+ button{min-height:46px}
+}
+@media screen and (min-width:700px) and (max-width:899px){
+ header{padding:16px 22px!important}
+ main{max-width:850px!important;padding:16px!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:12px!important}
+ main>section{margin:0!important;min-width:0}
+ main>section:nth-child(1),main>section:nth-child(2),main>section:nth-child(3),main>section:nth-child(4),main>section:nth-child(7),main>section:nth-child(8),main>section:nth-child(9),main>section:nth-child(10){grid-column:1/-1}
+ main>section:nth-child(5){grid-column:1/-1}
+ main>section:nth-child(6){grid-column:1/-1}
+ #productList{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ #cartList{max-height:300px;overflow:auto}
+}
+@media screen and (max-width:699px){
+ main{display:block!important}
+ main>section{margin-bottom:12px!important}
+}
+@media (hover:none) and (pointer:coarse){
+ button{min-height:48px;touch-action:manipulation}
+ input{min-height:46px;font-size:16px}
+ .product button,.qty button{min-height:48px}
+}
 </style>
 </head>
 <body>
