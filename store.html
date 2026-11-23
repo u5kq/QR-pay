@@ -1299,7 +1299,7 @@ renderAll();
  const money=n=>"¥"+Number(n||0).toLocaleString("ja-JP");
  function screen(id){root.querySelectorAll(".kiosk-screen").forEach(x=>x.classList.toggle("active",x.id===id));}
  function message(id,text){const el=document.getElementById(id);if(el)el.textContent=text;}
- function stop(){if(scanner){try{if(scanner.isScanning)scanner.stop();}catch(e){}}}
+ async function stop(){if(scanner){try{if(scanner.isScanning)await scanner.stop();}catch(e){}try{scanner.clear();}catch(e){}scanner=null;}}
  function cartRows(target){
   const el=document.getElementById(target);if(!el)return;
   if(!cart.length){el.innerHTML='<p class="kiosk-scan-hint">商品がまだありません。</p>';return;}
@@ -1320,11 +1320,9 @@ renderAll();
   try{
    scanner=new Html5Qrcode(target,{verbose:false,useBarCodeDetectorIfSupported:true});
    const formats=[Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.EAN_8,Html5QrcodeSupportedFormats.UPC_A,Html5QrcodeSupportedFormats.UPC_E,Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.CODE_39,Html5QrcodeSupportedFormats.ITF];
-   const scanWidth=Math.max(260,Math.min(680,Math.floor(window.innerWidth*.88)));
-   const scanHeight=Math.max(130,Math.min(220,Math.floor(scanWidth*.34)));
    await scanner.start(
     {facingMode:"environment"},
-    {fps:20,qrbox:{width:scanWidth,height:scanHeight},aspectRatio:1.7777778,formatsToSupport:formats,disableFlip:true},
+    {fps:20,qrbox:(viewfinderWidth,viewfinderHeight)=>({width:Math.max(1,Math.min(viewfinderWidth-24,Math.floor(viewfinderWidth*.92))),height:Math.max(1,Math.min(viewfinderHeight-24,Math.floor(viewfinderHeight*.34)))}),formatsToSupport:formats,disableFlip:true},
     async decoded=>{
      const now=Date.now();
      if(decoded===lastCode&&now-lastAt<1800)return;
@@ -1380,11 +1378,11 @@ renderAll();
  document.getElementById("kioskStart").onclick=startSession;
  document.getElementById("kioskToPay").onclick=toPayment;
  document.getElementById("kioskBackWelcome").onclick=()=>{stop();cart=[];save();renderAll();enter("welcome");};
- document.getElementById("kioskBackItems").onclick=()=>{stop();stage="items";screen("kioskProducts");startCamera("selfKioskReader","items");};
+ document.getElementById("kioskBackItems").onclick=async()=>{await stop();stage="items";screen("kioskProducts");startCamera("selfKioskReader","items");};
  document.getElementById("kioskManualAdd").onclick=()=>{const input=document.getElementById("kioskManualBarcode"),code=input.value.trim(),p=products.find(x=>String(x.barcode||"").trim()===code);if(!p){message("kioskScanStatus","商品が見つかりません。バーコードを確認してください。");return;}addToCart(p.id);input.value="";updateSummary();message("kioskScanStatus","追加しました："+p.name);};
  document.getElementById("kioskNewCustomer").onclick=()=>{stage="welcome";screen("kioskWelcome");};
  document.getElementById("kioskPrintReceipt").onclick=()=>{document.getElementById("receiptSection").classList.remove("hidden");printReceiptById(lastRecord?.requestId);};
- document.getElementById("kioskExit").onclick=()=>{stop();document.body.classList.remove("self-kiosk-active");document.body.classList.remove("self-mode");document.getElementById("qrStaffMode").click();};
+ document.getElementById("kioskExit").onclick=async()=>{await stop();document.body.classList.remove("self-kiosk-active");document.body.classList.remove("self-mode");document.getElementById("qrStaffMode").click();};
  window.addEventListener("beforeunload",stop);
  window.addEventListener("qrpay:selfmode",()=>enter("welcome"));
  window.qrPaySelfKiosk={start:()=>enter("welcome"),stop};
