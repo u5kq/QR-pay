@@ -2155,5 +2155,40 @@ renderAll();
 })();
 </script>
 <script id="qrpay-v36-runtime-theme">(function(){var s=document.createElement("style");s.id="qrpay-v36-runtime-theme-style";s.textContent=":root{--qsi:#191919;--qsm:#777;--qsl:#e5e5e0;--qsb:#f3f3f1}\nhtml,body{min-width:320px;background:var(--qsb)!important;color:var(--qsi)!important;font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif}\nheader{position:sticky;top:0;z-index:80;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:15px 24px!important;background:#fffffff5!important;color:#191919!important;border:0!important;border-bottom:1px solid var(--qsl)!important;box-shadow:0 3px 14px #00000007!important;backdrop-filter:blur(14px)}\nheader h1{font-size:19px!important;font-weight:850;letter-spacing:2px!important}header p{color:#858585!important;font-size:10px!important;letter-spacing:1.2px}\nmain{width:100%;max-width:1500px!important;margin:0 auto!important;padding:20px clamp(12px,2vw,28px) 40px!important}\nmain>section{min-width:0;margin:0 0 14px!important;padding:20px!important;border:1px solid var(--qsl)!important;border-radius:13px!important;background:#fff!important;box-shadow:0 3px 13px #00000005!important}\nh2{font-size:15px!important;font-weight:800!important}h3{font-size:13px!important;font-weight:750!important}\nlabel{display:block;margin:9px 0 5px;color:#666;font-size:11px;font-weight:700}\ninput,select,textarea{min-width:0;max-width:100%;min-height:44px;padding:11px 12px!important;border:1px solid #dcdcd6!important;border-radius:9px!important;background:#fff!important;color:#191919!important;font-size:14px!important;box-shadow:none!important}\nbutton{min-height:43px;padding:10px 14px!important;border:1px solid #191919!important;border-radius:9px!important;background:#191919!important;color:#fff!important;font-size:12px!important;font-weight:750!important}\nbutton.secondary{border-color:#d9d9d3!important;background:#fff!important;color:#222!important}button.danger{border-color:#e1d8d5!important;background:#fff!important;color:#8a3830!important}\n.row{gap:9px}.grid{gap:10px}\n.metric{min-width:0;padding:14px!important;border:1px solid #e9e9e4!important;border-radius:10px!important;background:#f8f8f6!important}\n.metric small{color:#777!important;font-size:10px}.metric strong{font-size:22px!important;font-weight:800!important;font-variant-numeric:tabular-nums}\n.product{min-width:0;padding:14px!important;border:1px solid var(--qsl)!important;border-radius:11px!important;background:#fff!important}\n.product strong{font-size:13px!important}.price{font-size:21px!important;font-weight:850!important}.product button{width:100%;margin-top:8px}\n.cart-item,.history-item{padding:12px 0!important;border-bottom:1px solid #ededE9!important}\n.total{padding-top:12px;border-top:1px solid var(--qsl);font-size:27px!important;font-weight:850!important}\n.muted{color:#858580!important;font-size:11px!important;line-height:1.6}\n#qrArea{padding:22px!important;border-radius:12px;background:#fafaf8!important}#qrAmount{display:block;font-size:34px;font-weight:850}\n#receiptPrint{box-shadow:0 8px 28px #0000000a!important}\n#posWorkspace{margin-top:12px}#posColumns{gap:15px!important}#posCart{border:1px solid var(--qsl)!important;border-radius:13px!important;box-shadow:0 8px 25px #00000008!important}\n#posCart .total{font-size:29px!important}#productList{gap:10px!important}#historyList{max-height:520px;overflow:auto}\n#barcode-reader{overflow:hidden;border-radius:12px}\n#selfKiosk{color:#191919!important}\n#selfKiosk .kiosk-card{border:1px solid #e5e5e0!important;border-radius:18px!important;box-shadow:0 14px 38px #0000000c!important}\n#selfKiosk .kiosk-primary{background:#191919!important;border-color:#191919!important;color:#fff!important}\n#selfKiosk .kiosk-secondary,#selfKiosk .kiosk-method{background:#fff!important;border:1px solid #deded8!important;color:#191919!important}\n#selfKiosk button{min-height:48px;border-radius:10px!important;font-size:13px!important}\n#selfKiosk input{min-height:50px!important;border-radius:10px!important;font-size:16px!important}\n@media(min-width:900px){main{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:14px}main>section{margin:0!important}main>section:first-of-type,main>section:nth-of-type(6),main>section:nth-of-type(7),main>section:nth-of-type(8){grid-column:1/-1}main>section:nth-of-type(2),main>section:nth-of-type(3),main>section:nth-of-type(4),main>section:nth-of-type(5),main>section:nth-of-type(9),main>section:nth-of-type(10),main>section:nth-of-type(11){grid-column:span 1}}\n@media(max-width:760px){header{align-items:flex-start;flex-direction:column;gap:5px}main{padding:12px 10px 28px!important}main>section{padding:15px!important}#productList{grid-template-columns:repeat(2,minmax(0,1fr))!important}#posColumns{grid-template-columns:1fr!important}#posCart{position:static!important}}\n@media(max-width:430px){#productList{grid-template-columns:1fr!important}main>section{padding:13px!important}.metric strong{font-size:20px!important}}";document.head.appendChild(s);})();</script>
+<script id="qrpay-self-checkout-entry">
+(function(){
+  function mount(){
+    if(document.getElementById("qrpaySelfCheckoutLaunch")) return;
+    var header=document.querySelector("body > header");
+    if(!header) return;
+    var btn=document.createElement("button");
+    btn.type="button";
+    btn.id="qrpaySelfCheckoutLaunch";
+    btn.innerHTML='<span class="qps-entry-kicker">CUSTOMER MODE</span><span class="qps-entry-label">セルフレジを起動 <b aria-hidden="true">→</b></span>';
+    btn.addEventListener("click",function(){
+      if(window.qrPaySelfKiosk && typeof window.qrPaySelfKiosk.start==="function"){
+        window.qrPaySelfKiosk.start();
+      } else {
+        document.body.classList.add("self-kiosk-active");
+        var root=document.getElementById("selfKiosk");
+        if(root){root.style.display="flex";root.querySelectorAll(".kiosk-screen").forEach(function(el){el.classList.toggle("active",el.id==="kioskWelcome");});}
+      }
+    });
+    header.appendChild(btn);
+    var style=document.createElement("style");
+    style.id="qrpay-self-checkout-entry-style";
+    style.textContent=
+      'body>header{display:flex!important;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}'+
+      '#qrpaySelfCheckoutLaunch{display:flex!important;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;min-height:48px;padding:8px 16px!important;border:1px solid #171717!important;border-radius:10px!important;background:#171717!important;color:#fff!important;cursor:pointer;box-shadow:0 4px 12px #00000014}'+
+      '#qrpaySelfCheckoutLaunch .qps-entry-kicker{font-size:8px;font-weight:800;letter-spacing:1.5px;color:#c7c7c7}'+
+      '#qrpaySelfCheckoutLaunch .qps-entry-label{font-size:13px;font-weight:800;letter-spacing:.02em}'+
+      '#qrpaySelfCheckoutLaunch b{padding-left:8px;font-size:16px}'+
+      '#qrpaySelfCheckoutLaunch:hover{background:#333!important}'+
+      '@media(max-width:600px){body>header{align-items:stretch!important}#qrpaySelfCheckoutLaunch{width:100%;align-items:center;flex-direction:row;gap:12px;min-height:50px}#qrpaySelfCheckoutLaunch .qps-entry-kicker{font-size:9px}}';
+    document.head.appendChild(style);
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",mount);else mount();
+})();
+</script>
 </body>
 </html>
