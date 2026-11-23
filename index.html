@@ -116,11 +116,34 @@ function showPayment() {
   document.getElementById("content").innerHTML =
     "<h2>支払い用バーコード</h2>" +
     "<p>バーコード機能は次の開発工程で実装します。</p>";
-}
+} 
+  
 function showScanner() {
-  document.getElementById("content").innerHTML =
-    "<h2>QRコード読み取り</h2>" +
-    "<p>QR読み取り機能は次の開発工程で実装します。</p>";
+    document.getElementById("content").innerHTML = `
+        <h2>QRコード読み取り</h2>
+        <p>店舗が発行したQRコードをカメラで読み取ります。</p>
+        <div id="reader" style="width:100%; max-width:400px;"></div>
+        <div id="scanResult"></div>
+        <button onclick="showScanner()">再読み込み</button>
+    `;
+
+    const scanner = new Html5Qrcode("reader");
+
+    scanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        function(decodedText) {
+            scanner.stop();
+            document.getElementById("scanResult").innerHTML =
+                "<p>QRコードを読み取りました。</p>" +
+                "<pre></pre>";
+            document.querySelector("#scanResult pre").textContent = decodedText;
+        },
+        function(error) {}
+    ).catch(function(error) {
+        document.getElementById("scanResult").textContent =
+            "カメラを起動できませんでした。";
+    });
 }
 
 </script>
