@@ -298,6 +298,71 @@ main>section:first-of-type .grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media(max-width:390px){#productList{grid-template-columns:1fr}.pos-workspace-heading strong{font-size:17px}}
 @media print{#posWorkspace,#qrV3Tools,.pos-advanced{display:none!important}}
 
+
+/* V3.3 dual-mode POS / self-checkout interface */
+#qrModeBar{max-width:1320px;margin:14px auto 0;padding:0 16px}
+#qrModeBar .mode-inner{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;border:1px solid #e4e4e1;border-radius:14px;padding:12px 14px}
+#qrModeBar .mode-copy strong{display:block;font-size:14px}
+#qrModeBar .mode-copy small{display:block;color:#777;margin-top:3px}
+#qrModeBar .mode-actions{display:flex;gap:7px}
+#qrModeBar button{min-height:42px;padding:9px 15px;border:1px solid #ccc;border-radius:9px;background:#fff;color:#111;font-weight:700}
+#qrModeBar button[aria-pressed="true"]{background:#111;color:#fff;border-color:#111}
+#qrSelfSteps{display:none}
+body.self-mode{background:#f5f5f3}
+body.self-mode #qrModeBar{max-width:1440px}
+body.self-mode #qrModeBar .mode-inner{border-radius:0 0 14px 14px}
+body.self-mode main{max-width:1440px!important;padding:18px 22px 40px!important;gap:16px!important}
+body.self-mode main>section:first-of-type,
+body.self-mode main>.pos-advanced,
+body.self-mode main>#qrV3Tools,
+body.self-mode main>section:not(#qrSection):not(#receiptSection):not(#posWorkspace){display:none!important}
+body.self-mode #posWorkspace{border:0;box-shadow:none;background:transparent;padding:0}
+body.self-mode .pos-workspace-heading{padding:8px 4px 14px}
+body.self-mode .pos-workspace-heading strong{font-size:25px;letter-spacing:-.5px}
+body.self-mode .pos-workspace-heading small{font-size:13px}
+body.self-mode #qrSelfSteps{display:flex;gap:8px;align-items:center;margin:0 0 14px}
+body.self-mode #qrSelfSteps span{font-size:12px;padding:8px 12px;border:1px solid #ddd;border-radius:30px;background:#fff;color:#666}
+body.self-mode #qrSelfSteps span.active{background:#111;color:#fff;border-color:#111}
+body.self-mode #posColumns{grid-template-columns:minmax(0,1.35fr) minmax(330px,.65fr);gap:20px}
+body.self-mode #posCatalog,body.self-mode #posCart{border:1px solid #e4e4e1;border-radius:18px;padding:20px;background:#fff}
+body.self-mode #posCatalog h2{font-size:21px;margin-bottom:16px}
+body.self-mode #posCatalog #productFilter{height:54px;border-radius:12px;background:#f6f6f4;border:1px solid #e5e5e2;padding:0 16px}
+body.self-mode #selfCategoryChips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 14px;scrollbar-width:thin}
+body.self-mode #selfCategoryChips button{flex:0 0 auto;min-height:40px;padding:8px 16px;border:1px solid #ddd;border-radius:30px;background:#fff;color:#111;font-weight:650}
+body.self-mode #selfCategoryChips button.active{background:#111;color:#fff;border-color:#111}
+body.self-mode #productList{grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:14px}
+body.self-mode #productList .product{border:1px solid #e8e8e5;border-radius:15px;padding:16px;gap:10px;min-height:165px;justify-content:space-between}
+body.self-mode #productList .product strong{font-size:17px;line-height:1.45}
+body.self-mode #productList .product .price{font-size:23px}
+body.self-mode #productList .product button{min-height:50px;border-radius:10px;font-size:15px}
+body.self-mode #productList .product button.secondary{display:none}
+body.self-mode #posCart{position:sticky;top:18px;background:#fff}
+body.self-mode #posCart h2{font-size:20px}
+body.self-mode #cartList{max-height:45vh;overflow:auto}
+body.self-mode #posCart .cart-item{padding:14px 0}
+body.self-mode #posCart .cart-item span{font-size:14px}
+body.self-mode #posCart .qty button{width:44px;height:44px;border-radius:50%;font-size:20px}
+body.self-mode #posCart .metric{padding:16px;border-radius:13px;background:#f6f6f4}
+body.self-mode #posCart .total{font-size:29px;padding-top:9px}
+body.self-mode #posCart #issueButton,body.self-mode #posCart #cashButton{min-height:58px;font-size:16px;border-radius:12px}
+body.self-mode #posCart #issueButton{background:#111;color:#fff;border-color:#111}
+body.self-mode #posCart #cashButton{background:#fff;color:#111;border:1px solid #aaa}
+body.self-mode #posCart label,body.self-mode #posCart #discountAmount,body.self-mode #posCart #taxRate,body.self-mode #posCart #cashTendered,body.self-mode #posCart #changeDue,body.self-mode #posCart .metric .row:not(:last-child){font-size:12px}
+body.self-mode #posCart> .row button{min-height:46px}
+body.self-mode #qrSection,body.self-mode #receiptSection{max-width:560px;margin:20px auto!important;width:100%;border-radius:18px;padding:22px;background:#fff}
+@media(max-width:760px){
+ #qrModeBar{padding:0 10px}
+ #qrModeBar .mode-inner{align-items:flex-start;flex-direction:column}
+ #qrModeBar .mode-actions{width:100%}
+ #qrModeBar .mode-actions button{flex:1}
+ body.self-mode main{padding:12px!important}
+ body.self-mode #posColumns{grid-template-columns:1fr;gap:12px}
+ body.self-mode #posCart{position:static;order:0}
+ body.self-mode #posCatalog{order:1}
+ body.self-mode #productList{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:390px){body.self-mode #productList{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -1084,6 +1149,74 @@ renderAll();
  if(search){search.placeholder="商品名・バーコードで検索";search.setAttribute("aria-label","商品名またはバーコードで検索");}
  const cartTitle=document.querySelector("#posCart h2");if(cartTitle)cartTitle.textContent="現在のカート";
  const tools=document.getElementById("qrV3Tools");if(tools){const h=tools.querySelector("h2");if(h)h.textContent="管理・便利ツール";const p=tools.querySelector("p");if(p)p.textContent="在庫確認、バックアップ、データ検査など。販売操作は上のレジ画面から行えます。";}
+})();
+
+
+/* V3.3 dual mode switch and self-checkout category navigation */
+(function(){
+ const main=document.querySelector("main");if(!main)return;
+ const bar=document.createElement("section");bar.id="qrModeBar";
+ bar.innerHTML='<div class="mode-inner"><div class="mode-copy"><strong id="qrModeTitle">店舗レジモード</strong><small id="qrModeDescription">スタッフが操作する通常のPOSレジ</small></div><div class="mode-actions"><button type="button" id="qrStaffMode" aria-pressed="true">レジ版</button><button type="button" id="qrSelfMode" aria-pressed="false">セルフレジ版</button></div></div>';
+ main.parentNode.insertBefore(bar,main);
+ const catalog=document.getElementById("posCatalog");
+ const list=document.getElementById("productList");
+ const filter=document.getElementById("productFilter");
+ const title=document.querySelector(".pos-workspace-heading strong");
+ const desc=document.querySelector(".pos-workspace-heading small");
+ if(catalog&&list){
+  const chips=document.createElement("div");chips.id="selfCategoryChips";chips.setAttribute("aria-label","商品カテゴリ");
+  if(filter)filter.insertAdjacentElement("afterend",chips);
+  const steps=document.createElement("div");steps.id="qrSelfSteps";
+  steps.innerHTML='<span class="active">1 商品を選ぶ</span><span>2 内容を確認</span><span>3 お支払い</span>';
+  const head=document.querySelector(".pos-workspace-heading");
+  if(head)head.insertAdjacentElement("afterend",steps);
+  let activeCategory="すべて";
+  function categories(){
+   const values=[...new Set(products.map(p=>String(p.category||"その他").trim()||"その他"))];
+   return ["すべて",...values];
+  }
+  function drawChips(){
+   chips.innerHTML="";
+   categories().forEach(category=>{
+    const b=document.createElement("button");b.type="button";b.textContent=category;
+    b.classList.toggle("active",category===activeCategory);
+    b.setAttribute("aria-pressed",String(category===activeCategory));
+    b.onclick=()=>{activeCategory=category;drawChips();drawProducts();};
+    chips.appendChild(b);
+   });
+  }
+  function drawProducts(){
+   const q=(filter?.value||"").trim().toLocaleLowerCase("ja-JP");
+   [...list.children].forEach(card=>{
+    const productName=card.querySelector("strong")?.textContent||"";
+    const p=products.find(x=>x.name===productName);
+    const matchesCategory=activeCategory==="すべて"||(p&&String(p.category||"その他")===activeCategory);
+    const matchesSearch=!q||card.textContent.toLocaleLowerCase("ja-JP").includes(q);
+    card.hidden=!(matchesCategory&&matchesSearch);
+   });
+  }
+  const originalRender=window.renderProducts;
+  window.renderProducts=function(){originalRender();drawChips();drawProducts();};
+  drawChips();
+  filter?.addEventListener("input",drawProducts);
+ }
+ function setMode(mode){
+  const self=mode==="self";
+  document.body.classList.toggle("self-mode",self);
+  localStorage.setItem("qrpay_store_mode",self?"self":"staff");
+  document.getElementById("qrStaffMode").setAttribute("aria-pressed",String(!self));
+  document.getElementById("qrSelfMode").setAttribute("aria-pressed",String(self));
+  document.getElementById("qrModeTitle").textContent=self?"セルフレジモード":"店舗レジモード";
+  document.getElementById("qrModeDescription").textContent=self?"お客様が商品を選び、カート内容を確認する画面":"スタッフが操作する通常のPOSレジ";
+  const h=document.querySelector(".pos-workspace-heading strong");
+  const d=document.querySelector(".pos-workspace-heading small");
+  if(h)h.textContent=self?"商品を選ぶ":"販売画面";
+  if(d)d.textContent=self?"商品を選択してカートに追加":"商品を選択してカートに追加";
+  if(self&&typeof window.renderProducts==="function")window.renderProducts();
+ }
+ document.getElementById("qrStaffMode").addEventListener("click",()=>setMode("staff"));
+ document.getElementById("qrSelfMode").addEventListener("click",()=>setMode("self"));
+ setMode(localStorage.getItem("qrpay_store_mode")==="self"?"self":"staff");
 })();
 
 </script>
