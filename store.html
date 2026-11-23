@@ -169,7 +169,7 @@ footer{color:#999;padding:24px}
   <h2>バーコード読み取り</h2>
   <div class="row"><input id="barcodeSearch" inputmode="numeric" placeholder="バーコード番号を入力"><button onclick="lookupBarcode()">商品を検索</button></div>
   <div id="barcode-reader" style="width:100%;max-width:480px;margin:10px auto"></div>
-  <div class="row"><button onclick="startBarcodeScanner()">カメラで読み取る</button><button class="secondary" onclick="focusBarcodeCamera()">ピントを再調整</button><button class="secondary" onclick="stopBarcodeScanner()">読み取り停止</button></div>
+  <div class="row"><button onclick="startBarcodeScanner()">商品／支払いバーコードを読み取る</button><button class="secondary" onclick="focusBarcodeCamera()">ピントを再調整</button><button class="secondary" onclick="stopBarcodeScanner()">読み取り停止</button></div>
   <p class="muted">対応カメラでは連続オートフォーカスを自動設定します。「ピントを再調整」で再適用できます。端末・ブラウザによってはカメラ側が対応せず、反映されない場合があります。</p>
   <div id="barcodeMessage" class="muted" aria-live="polite"></div>
 </section>
@@ -512,7 +512,7 @@ function renderReceipt(record){
  if(receiptSettings.address)addText("div",receiptSettings.address,"receipt-center");
  if(receiptSettings.phone)addText("div","TEL："+receiptSettings.phone,"receipt-center");
  addText("div","TRANSACTION COPY","receipt-sub");
- addText("div",record.paymentMethod==="現金（デモ記録）"?"現金会計 デモ記録":"QRコード発行控え","receipt-center");
+ addText("div",record.paymentMethod==="現金（デモ記録）"?"現金会計 デモ記録":record.paymentMethod==="バーコード（デモ記録）"?"バーコード会計 デモ記録":"QRコード発行控え","receipt-center");
  addText("div","DEMO ONLY ・ 実際の決済証明ではありません","receipt-stamp receipt-center");
  addText("div","","receipt-line");
  const meta1=document.createElement("div");meta1.className="receipt-meta";
@@ -525,7 +525,7 @@ function renderReceipt(record){
  meta2.append(m1,m2);area.appendChild(meta2);
  const meta3=document.createElement("div");meta3.className="receipt-meta";
  const m3=document.createElement("span");m3.textContent="ステータス";
- const m4=document.createElement("strong");m4.textContent=record.status==="cancelled"?"取消済み（デモ）":record.paymentMethod==="現金（デモ記録）"?"現金会計（デモ記録）":"QR発行済み・決済未確認";
+ const m4=document.createElement("strong");m4.textContent=record.status==="cancelled"?"取消済み（デモ）":record.paymentMethod==="現金（デモ記録）"?"現金会計（デモ記録）":record.paymentMethod==="バーコード（デモ記録）"?"バーコード会計（デモ記録）":"QR発行済み・決済未確認";
  meta3.append(m3,m4);area.appendChild(meta3);
  addText("div","","receipt-line");
  const head=document.createElement("div");head.className="receipt-items-head";
@@ -580,7 +580,7 @@ function renderHistory(){
   date.textContent=isNaN(parsed.getTime())?"日時不明":parsed.toLocaleString("ja-JP");
   const status=document.createElement("span");
   status.className="status";
-  status.textContent=item.status==="cancelled"?"取消済み（デモ記録）":item.status==="issued"?"QR発行済み・決済未確認":"状態不明";
+  status.textContent=item.status==="cancelled"?"取消済み（デモ記録）":item.status==="issued"?"QR発行済み・決済未確認":item.status==="cash-demo"?"現金デモ記録":item.status==="barcode-demo"?"バーコードデモ記録":"状態不明";
   const cancelButton=document.createElement("button");
   cancelButton.className="danger";
   cancelButton.textContent=item.status==="cancelled"?"取消済み":"QR発行を取り消す";
@@ -639,6 +639,22 @@ function lookupBarcode(code){
  document.getElementById("barcodeSearch").value="";
  message.textContent=product.name+" をカートに追加しました。";
 }
+function checkoutBarcodeDemo(rawCode){
+ const parts=String(rawCode).split("|"),token=parts[1],expiresAt=Number(parts[2]);
+ const message=document.getElementById("barcodeMessage");
+ if(parts[0]!=="QPB1"||!token||!Number.isFinite(expiresAt)){message.textContent="QR PAYバーコードの形式が正しくありません。";return;}
+ if(Date.now()>expiresAt){message.textContent="この支払いバーコードは期限切れです。USER側で再表示してください。";return;}
+ const used=load("qrpay_store_used_customer_codes",[]);
+ if(used.includes(token)){message.textContent="このバーコードはすでに使用済みです。";return;}
+ const amount=total();
+ if(!amount||amount>100000){message.textContent="先に商品をカートへ追加し、合計金額を確認してください。";return;}
+ if(!confirm("QR PAYのデモ支払いバーコードを読み取りました。\n合計："+yen(amount)+"\nこの店舗端末にデモ取引として記録しますか？\n※USER側の残高とは連動せず、実際の決済は行いません。"))return;
+ localStorage.setItem("qrpay_store_used_customer_codes",JSON.stringify([...used,token].slice(-500)));
+ const record={requestId:"BARCODE-"+token.slice(0,12),amount,store:receiptSettings.name||"DEMO STORE",date:new Date().toISOString(),status:"barcode-demo",paymentMethod:"バーコード（デモ記録）",items:cart.map(item=>({name:item.name,price:item.price,qty:item.qty}))};
+ issued.unshift(record);cart=[];save();renderAll();
+ renderReceipt(record);document.getElementById("receiptSection").classList.remove("hidden");
+ message.textContent="バーコードを読み取り、店舗側のデモ取引控えを作成しました。";
+}
 function startBarcodeRegistration(){
  barcodeScanMode="register";
  startBarcodeCamera();
@@ -653,9 +669,14 @@ async function startBarcodeCamera(){
  try{
   if(!barcodeScanner)barcodeScanner=new Html5Qrcode("barcode-reader");
   if(barcodeScanner.isScanning)await barcodeScanner.stop();
-  const formats=[Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.EAN_8,Html5QrcodeSupportedFormats.UPC_A,Html5QrcodeSupportedFormats.UPC_E,Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.CODE_39,Html5QrcodeSupportedFormats.ITF];
+  const formats=[Html5QrcodeSupportedFormats.QR_CODE,Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.EAN_8,Html5QrcodeSupportedFormats.UPC_A,Html5QrcodeSupportedFormats.UPC_E,Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.CODE_39,Html5QrcodeSupportedFormats.ITF];
   const mode=barcodeScanMode;
-  await barcodeScanner.start({facingMode:"environment"},{fps:10,qrbox:{width:280,height:120},formatsToSupport:formats},decoded=>{
+  await barcodeScanner.start({facingMode:"environment"},{fps:12,qrbox:{width:280,height:140},formatsToSupport:formats},async decoded=>{
+   if(decoded.startsWith("QPB1|")){
+    await stopBarcodeScanner();
+    checkoutBarcodeDemo(decoded);
+    return;
+   }
    if(mode==="register"){
     document.getElementById("productBarcode").value=decoded;
     message.textContent="読み取り成功："+decoded+"。商品名と価格を入力して「商品を登録」を押してください。";
