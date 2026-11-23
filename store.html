@@ -45,6 +45,20 @@ button:disabled{opacity:.4}
 #qrcode img{max-width:100%}
 .hidden{display:none}
 footer{text-align:center;color:#888;font-size:11px;padding:20px}
+#receiptSection{max-width:460px;margin-left:auto;margin-right:auto}
+#receiptPrint{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#111;background:#fff;padding:18px;max-width:360px;margin:0 auto}
+.receipt-center{text-align:center}
+.receipt-line{border-top:1px dashed #aaa;margin:12px 0}
+.receipt-row{display:flex;justify-content:space-between;gap:12px;padding:4px 0;font-size:13px}
+.receipt-total{font-size:20px;font-weight:800}
+@media print{
+ @page{size:80mm auto;margin:5mm}
+ body *{visibility:hidden!important}
+ #receiptSection,#receiptSection *{visibility:visible!important}
+ #receiptSection{display:block!important;position:absolute!important;left:0!important;top:0!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important}
+ #receiptPrint{width:100%!important;max-width:none!important;padding:0!important;margin:0!important}
+ .no-print{display:none!important}
+}
 
 /* QR PAY V2 — Minimal White visual layer. Existing logic and storage remain unchanged. */
 :root{color-scheme:light}
@@ -139,6 +153,15 @@ footer{color:#999;padding:24px}
     <p class="status">デモ用QRコード・有効期限5分</p>
   </div>
   <button class="secondary" onclick="closeQR()">閉じる</button>
+</section>
+
+<section id="receiptSection" class="hidden">
+  <div id="receiptPrint" aria-live="polite"></div>
+  <div class="no-print row">
+    <button onclick="window.print()">レシートを印刷</button>
+    <button class="secondary" onclick="document.getElementById('receiptSection').classList.add('hidden')">閉じる</button>
+  </div>
+  <p class="muted no-print">ブラウザの印刷画面からプリンターまたはPDF保存を選べます。印刷内容はデモ取引の控えです。</p>
 </section>
 
 <section>
@@ -337,14 +360,17 @@ function issueQR(){
   expiresAt
  };
 
- issued.unshift({
+ const issuedAt=new Date().toISOString();
+ const record={
   requestId,
   amount,
   store:"DEMO STORE",
-  date:new Date().toISOString(),
+  date:issuedAt,
   expiresAt,
-  status:"issued"
- });
+  status:"issued",
+  items:cart.map(item=>({name:item.name,price:item.price,qty:item.qty}))
+ };
+ issued.unshift(record);
 
  save();
  document.getElementById("qrcode").innerHTML="";
@@ -359,6 +385,7 @@ function issueQR(){
  document.getElementById("qrExpiry").textContent=
   "有効期限："+new Date(expiresAt).toLocaleTimeString("ja-JP");
  document.getElementById("qrSection").classList.remove("hidden");
+ renderReceipt(record);
 
  cart=[];
  save();renderAll();
@@ -366,6 +393,54 @@ function issueQR(){
 
 function closeQR(){
  document.getElementById("qrSection").classList.add("hidden");
+}
+
+function renderReceipt(record){
+ const area=document.getElementById("receiptPrint");
+ area.innerHTML="";
+ const addText=(tag,text,className)=>{
+  const node=document.createElement(tag);
+  node.textContent=text;
+  if(className)node.className=className;
+  area.appendChild(node);
+  return node;
+ };
+ addText("h2","QR PAY","receipt-center");
+ addText("div","DEMO STORE","receipt-center");
+ addText("div","デモ取引発行控え","receipt-center");
+ addText("div","※実際の決済完了・領収証ではありません","receipt-center");
+ addText("div","", "receipt-line");
+ addText("div","発行日時："+new Date(record.date).toLocaleString("ja-JP"));
+ addText("div","取引番号："+record.requestId);
+ addText("div","状態：QR発行済み・決済未確認");
+ addText("div","", "receipt-line");
+ const items=Array.isArray(record.items)?record.items:[];
+ if(items.length){
+  items.forEach(item=>{
+   const row=document.createElement("div");
+   row.className="receipt-row";
+   const name=document.createElement("span");
+   name.textContent=String(item.name)+" × "+Number(item.qty||0);
+   const price=document.createElement("strong");
+   price.textContent=yen(Number(item.price||0)*Number(item.qty||0));
+   row.append(name,price);
+   area.appendChild(row);
+  });
+ }else{
+  addText("div","商品明細：旧履歴のため保存されていません");
+ }
+ addText("div","", "receipt-line");
+ addText("div","合計："+yen(record.amount),"receipt-total");
+ addText("div","", "receipt-line");
+ addText("div","これはQR発行の控えです。決済完了を証明するものではありません。","receipt-center");
+ document.getElementById("receiptSection").classList.remove("hidden");
+}
+
+function printReceiptById(requestId){
+ const record=issued.find(item=>item.requestId===requestId);
+ if(!record)return;
+ renderReceipt(record);
+ window.print();
 }
 
 function renderHistory(){
@@ -385,7 +460,12 @@ function renderHistory(){
   const status=document.createElement("span");
   status.className="status";
   status.textContent=item.status==="issued"?"QR発行済み・決済未確認":"状態不明";
-  row.append(title,date,status);
+  const receiptButton=document.createElement("button");
+  receiptButton.className="secondary";
+  receiptButton.textContent="控えを表示・印刷";
+  receiptButton.style.marginTop="8px";
+  receiptButton.onclick=()=>printReceiptById(item.requestId);
+  row.append(title,date,status,receiptButton);
   area.appendChild(row);
  });
 }
