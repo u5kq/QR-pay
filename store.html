@@ -6,123 +6,132 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#111111">
 <title>QR PAY STORE</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#f3f3f3;color:#111;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
 header{background:#111;color:white;padding:22px}
-.logo{font-size:25px;font-weight:900;letter-spacing:2px}
-.sub{color:#aaa;font-size:11px}
-main{max-width:650px;padding:16px;margin:auto}
-.panel{background:white;padding:18px;border-radius:16px;margin-bottom:14px}
-h2{font-size:18px;margin:0 0 14px}
-h3{font-size:16px}
-input{width:100%;padding:13px;border:1px solid #ddd;border-radius:9px;font-size:16px;margin:7px 0 12px}
-button{border:0;border-radius:10px;padding:12px;background:#111;color:white;font-weight:bold;font-size:14px;cursor:pointer}
+header h1{margin:0;font-size:23px;letter-spacing:2px}
+header p{margin:6px 0 0;color:#bbb;font-size:12px}
+main{max-width:900px;margin:auto;padding:16px}
+section{background:white;border:1px solid #ddd;border-radius:12px;padding:18px;margin-bottom:16px}
+h2{font-size:17px;margin:0 0 14px}
+h3{font-size:14px;margin:0 0 10px}
+input,button{font:inherit}
+input{width:100%;padding:12px;border:1px solid #ccc;border-radius:8px;margin:5px 0 12px}
+button{border:0;border-radius:8px;padding:12px 15px;background:#111;color:white;font-weight:600;cursor:pointer}
+button.secondary{background:#eee;color:#111}
+button.danger{background:#eee;color:#a00}
 button:disabled{opacity:.4}
-button.light{background:#eee;color:#111}
-button.danger{background:#eee;color:#b22}
-button.small{padding:8px 12px}
-.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.products{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.product{background:#f4f4f4;padding:13px;border-radius:12px}
-.product button{width:100%;margin-top:8px}
-.price{font-weight:800;font-size:18px;margin:8px 0}
-.cartitem{padding:12px 0;border-bottom:1px solid #eee}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row>*{flex:1}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.product{border:1px solid #ddd;border-radius:10px;padding:13px}
+.product strong{display:block;margin-bottom:7px}
+.price{font-size:18px;font-weight:700;margin:5px 0 12px}
+.metric{background:#f5f5f5;border-radius:9px;padding:14px}
+.metric small{color:#666}
+.metric strong{display:block;font-size:23px;margin-top:6px}
+.cart-item,.history-item{border-bottom:1px solid #eee;padding:12px 0}
+.cart-item:last-child,.history-item:last-child{border:0}
+.cart-item .row{justify-content:space-between}
 .qty{display:flex;align-items:center;gap:8px}
 .qty button{padding:7px 12px}
-.total{font-size:27px;font-weight:900}
-.muted{font-size:11px;color:#888}
-.dark{background:#111;color:white;padding:20px;border-radius:15px;margin-bottom:14px}
-.dark small{color:#aaa}
-#qrcode{display:flex;justify-content:center;margin:20px auto}
-#qrcode img,#qrcode canvas{max-width:100%;height:auto}
-#qrResult{text-align:center}
-.historyitem{padding:12px 0;border-bottom:1px solid #eee}
+.total{font-size:25px;font-weight:800;text-align:right;margin:16px 0}
+.muted{color:#777;font-size:12px}
+.status{background:#f3f3f3;border-radius:7px;padding:8px;font-size:12px;display:inline-block}
+#qrArea{text-align:center;padding:16px}
+#qrcode{display:flex;justify-content:center;margin:16px auto}
+#qrcode img{max-width:100%}
+.hidden{display:none}
+footer{text-align:center;color:#888;font-size:11px;padding:20px}
 </style>
 </head>
 <body>
 <header>
- <div class="logo">QR PAY</div>
- <div class="sub">STORE POS SYSTEM / DEMO</div>
+  <h1>QR PAY STORE</h1>
+  <p>DEMO POS SYSTEM / 店舗管理</p>
 </header>
 
 <main>
-
-<section class="dark">
- <small>QR ISSUED TOTAL</small>
- <div class="total" id="issuedTotal">¥0</div>
- <small id="issuedCount">QR発行 0件</small>
- <p class="muted">※決済完了前のQR発行額です。実売上ではありません。</p>
+<section>
+  <h2>STORE DASHBOARD</h2>
+  <div class="grid">
+    <div class="metric">
+      <small>QR発行総額</small>
+      <strong id="totalIssued">¥0</strong>
+    </div>
+    <div class="metric">
+      <small>QR発行件数</small>
+      <strong id="issuedCount">0</strong>
+    </div>
+    <div class="metric">
+      <small>決済確認済み</small>
+      <strong>0件</strong>
+    </div>
+  </div>
+  <p class="muted">QR発行額は売上ではありません。別端末の決済結果は自動取得できません。</p>
 </section>
 
-<section class="panel">
- <h2>商品登録</h2>
- <label>商品名</label>
- <input id="productName" placeholder="例：コーヒー">
- <label>価格（円）</label>
- <input id="productPrice" type="number" min="1" max="100000" placeholder="例：350">
- <button onclick="addProduct()">商品を登録</button>
+<section>
+  <h2>商品登録</h2>
+  <label>商品名</label>
+  <input id="productName" placeholder="例：ジュース">
+  <label>価格（円）</label>
+  <input id="productPrice" type="number" min="1" max="100000" placeholder="例：150">
+  <button onclick="addProduct()">商品を登録</button>
 </section>
 
-<section class="panel">
- <div class="row">
+<section>
   <h2>商品一覧</h2>
-  <span class="muted" id="productCount">0商品</span>
- </div>
- <div class="products" id="products"></div>
+  <div id="productList" class="grid"></div>
 </section>
 
-<section class="panel">
- <div class="row">
+<section>
   <h2>カート</h2>
-  <button class="light small" onclick="clearCart()">全削除</button>
- </div>
- <div id="cart"></div>
- <div class="row">
-  <strong>商品合計</strong>
-  <div class="total" id="cartTotal">¥0</div>
- </div>
- <p class="muted">デモ会計です。実際のお金は動きません。</p>
- <button style="width:100%" onclick="checkout()" id="checkoutButton">
-  会計してQRコードを発行
- </button>
+  <div id="cartList"></div>
+  <div class="total">合計：<span id="cartTotal">¥0</span></div>
+  <div class="row">
+    <button onclick="issueQR()" id="issueButton">QRコードを発行</button>
+    <button class="secondary" onclick="clearCart()">カートを空にする</button>
+  </div>
 </section>
 
-<section class="panel" id="qrResult" hidden>
- <h2>会計用QRコード</h2>
- <div id="qrcode"></div>
- <div class="total" id="qrAmount"></div>
- <p id="qrStatus">QR発行済み・決済未確認</p>
- <p class="muted" id="qrExpiry"></p>
- <button class="light" onclick="closeQR()">閉じる</button>
+<section id="qrSection" class="hidden">
+  <h2>QR CODE</h2>
+  <div id="qrArea">
+    <div id="qrcode"></div>
+    <strong id="qrAmount"></strong>
+    <p id="qrExpiry" class="muted"></p>
+    <p class="status">デモ用QRコード・有効期限5分</p>
+  </div>
+  <button class="secondary" onclick="closeQR()">閉じる</button>
 </section>
 
-<section class="panel">
- <h2>会計履歴</h2>
- <div id="salesHistory"></div>
+<section>
+  <h2>QR発行履歴・決済確認</h2>
+  <p class="muted">ここに表示される履歴は、このブラウザでのQR発行記録です。</p>
+  <div id="historyList"></div>
 </section>
 
-<section class="panel">
- <h2>店舗情報</h2>
- <strong>DEMO STORE</strong>
- <p class="muted">QR PAY DEMO POS</p>
- <button class="light" onclick="resetDemo()" style="width:100%">
-  デモデータを初期化
- </button>
+<section>
+  <h2>データ管理</h2>
+  <button class="secondary" onclick="exportData()">データを書き出す</button>
+  <button class="danger" onclick="resetDemo()">デモデータを初期化</button>
+  <p class="muted">初期化すると商品・カート・発行履歴が消えます。</p>
 </section>
-
-<p class="muted" style="text-align:center">
-QR PAY STORE / DEMO ONLY / NO REAL MONEY
-</p>
 </main>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script>
-const productKey="qrpay_store_products";
-const cartKey="qrpay_store_cart";
-const salesKey="qrpay_store_issued";
+<footer>QR PAY STORE / DEMO ONLY</footer>
 
-const initialProducts=[
+<script>
+const KEYS={
+ products:"qrpay_store_products",
+ cart:"qrpay_store_cart",
+ issued:"qrpay_store_issued"
+};
+
+const defaults=[
  {id:"p1",name:"コーヒー",price:350},
  {id:"p2",name:"紅茶",price:300},
  {id:"p3",name:"サンドイッチ",price:500},
@@ -131,278 +140,256 @@ const initialProducts=[
 
 function load(key,fallback){
  try{
-  const value=localStorage.getItem(key);
-  return value===null?fallback:JSON.parse(value);
- }catch(e){return fallback}
+  const value=JSON.parse(localStorage.getItem(key));
+  return value===null?fallback:value;
+ }catch(e){return fallback;}
 }
 
-let products=load(productKey,initialProducts);
-let cart=load(cartKey,[]);
-let issued=load(salesKey,[]);
+let products=load(KEYS.products,defaults);
+let cart=load(KEYS.cart,[]);
+let issued=load(KEYS.issued,[]);
 
 function save(){
- localStorage.setItem(productKey,JSON.stringify(products));
- localStorage.setItem(cartKey,JSON.stringify(cart));
- localStorage.setItem(salesKey,JSON.stringify(issued));
+ localStorage.setItem(KEYS.products,JSON.stringify(products));
+ localStorage.setItem(KEYS.cart,JSON.stringify(cart));
+ localStorage.setItem(KEYS.issued,JSON.stringify(issued));
 }
 
 function yen(value){
- return "¥"+Number(value).toLocaleString("ja-JP");
+ return "¥"+Number(value||0).toLocaleString("ja-JP");
 }
 
-function safe(value){
- return String(value??"").replace(/[&<>"']/g,c=>({
-  "&":"&amp;","<":"&lt;",">":"&gt;",
-  '"':"&quot;","'":"&#39;"
- }[c]));
+function escapeHTML(value){
+ return String(value).replace(/[&<>"']/g,c=>({
+ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ })[c]);
+}
+
+function total(){
+ return cart.reduce((sum,item)=>sum+item.price*item.qty,0);
+}
+
+function renderProducts(){
+ const area=document.getElementById("productList");
+ area.innerHTML="";
+ products.forEach(product=>{
+  const card=document.createElement("div");
+  card.className="product";
+  const name=document.createElement("strong");
+  name.textContent=product.name;
+  const price=document.createElement("div");
+  price.className="price";
+  price.textContent=yen(product.price);
+  const add=document.createElement("button");
+  add.textContent="カートに追加";
+  add.onclick=()=>addToCart(product.id);
+  const remove=document.createElement("button");
+  remove.className="secondary";
+  remove.textContent="商品削除";
+  remove.style.marginTop="7px";
+  remove.onclick=()=>removeProduct(product.id);
+  card.append(name,price,add,remove);
+  area.appendChild(card);
+ });
 }
 
 function addProduct(){
  const name=document.getElementById("productName").value.trim();
  const price=Number(document.getElementById("productPrice").value);
-
  if(!name||!Number.isInteger(price)||price<1||price>100000){
-  alert("商品名と1〜100,000円の整数を入力してください。");
+  alert("商品名と1〜100,000円の整数価格を入力してください。");
   return;
  }
-
- products.push({
-  id:crypto.randomUUID(),
-  name:name,
-  price:price
- });
-
- save();
+ products.push({id:crypto.randomUUID(),name,price});
  document.getElementById("productName").value="";
  document.getElementById("productPrice").value="";
- render();
+ save();renderAll();
 }
 
-function addCart(id){
+function removeProduct(id){
+ if(!confirm("この商品を削除しますか？"))return;
+ products=products.filter(p=>p.id!==id);
+ save();renderAll();
+}
+
+function addToCart(id){
  const product=products.find(p=>p.id===id);
  if(!product)return;
-
- const item=cart.find(p=>p.id===id);
+ const item=cart.find(x=>x.id===id);
  if(item)item.qty++;
  else cart.push({...product,qty:1});
-
- save();
- render();
+ save();renderAll();
 }
 
 function changeQty(id,amount){
- const item=cart.find(p=>p.id===id);
+ const item=cart.find(x=>x.id===id);
  if(!item)return;
-
  item.qty+=amount;
- if(item.qty<=0)cart=cart.filter(p=>p.id!==id);
-
- save();
- render();
+ cart=cart.filter(x=>x.qty>0);
+ save();renderAll();
 }
 
-function removeCart(id){
- cart=cart.filter(p=>p.id!==id);
- save();
- render();
+function removeCartItem(id){
+ cart=cart.filter(x=>x.id!==id);
+ save();renderAll();
 }
 
 function clearCart(){
- if(cart.length===0)return;
+ if(!cart.length)return;
  if(!confirm("カートを空にしますか？"))return;
- cart=[];
- save();
- render();
+ cart=[];save();renderAll();
 }
 
-function getTotal(){
- return cart.reduce((sum,item)=>sum+item.price*item.qty,0);
+function renderCart(){
+ const area=document.getElementById("cartList");
+ area.innerHTML="";
+ if(!cart.length){
+  area.textContent="カートは空です。";
+ }
+ cart.forEach(item=>{
+  const row=document.createElement("div");
+  row.className="cart-item";
+  const top=document.createElement("div");
+  top.className="row";
+  const info=document.createElement("span");
+  info.textContent=item.name+" / "+yen(item.price);
+  const subtotal=document.createElement("strong");
+  subtotal.textContent=yen(item.price*item.qty);
+  top.append(info,subtotal);
+  const bottom=document.createElement("div");
+  bottom.className="row";
+  const qty=document.createElement("div");
+  qty.className="qty";
+  const minus=document.createElement("button");
+  minus.className="secondary";
+  minus.textContent="−";
+  minus.onclick=()=>changeQty(item.id,-1);
+  const number=document.createElement("span");
+  number.textContent=item.qty+" 個";
+  const plus=document.createElement("button");
+  plus.className="secondary";
+  plus.textContent="+";
+  plus.onclick=()=>changeQty(item.id,1);
+  qty.append(minus,number,plus);
+  const remove=document.createElement("button");
+  remove.className="danger";
+  remove.textContent="削除";
+  remove.onclick=()=>removeCartItem(item.id);
+  bottom.append(qty,remove);
+  row.append(top,bottom);
+  area.appendChild(row);
+ });
+ document.getElementById("cartTotal").textContent=yen(total());
+ document.getElementById("issueButton").disabled=!cart.length;
 }
 
-function render(){
- const productArea=document.getElementById("products");
-
- document.getElementById("productCount").textContent=
-  products.length+"商品";
-
- productArea.innerHTML=products.map(p=>`
-  <div class="product">
-   <strong>${safe(p.name)}</strong>
-   <div class="price">${yen(p.price)}</div>
-   <button onclick="addCart('${safe(p.id)}')">カートに追加</button>
-   <button class="light small" onclick="deleteProduct('${safe(p.id)}')">商品削除</button>
-  </div>
- `).join("")||"<p>商品がありません。</p>";
-
- document.getElementById("cart").innerHTML=
-  cart.length===0?"<p class='muted'>商品を追加してください。</p>":
-  cart.map(item=>`
-   <div class="cartitem">
-    <div class="row">
-     <strong>${safe(item.name)}</strong>
-     <strong>${yen(item.price*item.qty)}</strong>
-    </div>
-    <div class="row">
-     <div class="qty">
-      <button class="light" onclick="changeQty('${safe(item.id)}',-1)">−</button>
-      <span>${item.qty}個</span>
-      <button class="light" onclick="changeQty('${safe(item.id)}',1)">＋</button>
-     </div>
-     <button class="danger small" onclick="removeCart('${safe(item.id)}')">削除</button>
-    </div>
-   </div>
-  `).join("");
-
- document.getElementById("cartTotal").textContent=yen(getTotal());
- document.getElementById("checkoutButton").disabled=cart.length===0;
-
- const totalIssued=issued.reduce((sum,item)=>sum+item.amount,0);
-
- document.getElementById("issuedTotal").textContent=yen(totalIssued);
- document.getElementById("issuedCount").textContent=
-  "QR発行 "+issued.length+"件";
-
- document.getElementById("salesHistory").innerHTML=
-  issued.length===0?"<p class='muted'>会計履歴はありません。</p>":
-  issued.map(item=>`
-   <div class="historyitem">
-    <strong>${yen(item.amount)}</strong>
-    <p class="muted">${safe(item.date)}</p>
-    <p class="muted">QR発行済み・決済未確認</p>
-   </div>
-  `).join("");
-}
-
-function checkout(){
- const total=getTotal();
-
- if(total<1||total>100000){
-  alert("合計金額は1〜100,000円にしてください。");
+function issueQR(){
+ const amount=total();
+ if(!amount||amount>100000){
+  alert("合計金額を確認してください。");
   return;
  }
-
  if(typeof QRCode==="undefined"){
-  alert("QRコードライブラリを読み込めませんでした。");
+  alert("QRコード機能を読み込めませんでした。通信環境を確認してください。");
   return;
  }
 
  const requestId=crypto.randomUUID();
  const expiresAt=Date.now()+5*60*1000;
-
- const demoData={
+ const payload={
   type:"QR_PAY_DEMO",
-  requestId:requestId,
-  amount:total,
+  requestId,
+  amount,
   store:"DEMO STORE",
-  expiresAt:expiresAt
+  expiresAt
  };
 
- const area=document.getElementById("qrcode");
- area.replaceChildren();
+ issued.unshift({
+  requestId,
+  amount,
+  store:"DEMO STORE",
+  date:new Date().toISOString(),
+  expiresAt,
+  status:"issued"
+ });
 
- new QRCode(area,{
-  text:JSON.stringify(demoData),
-  width:230,
-  height:230,
+ save();
+ document.getElementById("qrcode").innerHTML="";
+ new QRCode(document.getElementById("qrcode"),{
+  text:JSON.stringify(payload),
+  width:220,
+  height:220,
   correctLevel:QRCode.CorrectLevel.M
  });
 
- document.getElementById("qrAmount").textContent=yen(total);
+ document.getElementById("qrAmount").textContent=yen(amount);
  document.getElementById("qrExpiry").textContent=
-  "有効期限：約5分";
+  "有効期限："+new Date(expiresAt).toLocaleTimeString("ja-JP");
+ document.getElementById("qrSection").classList.remove("hidden");
 
- document.getElementById("qrResult").hidden=false;
-
- issued.unshift({
-  requestId:requestId,
-  amount:total,
-  date:new Date().toLocaleString("ja-JP"),
-  status:"issued",
-  items:cart.map(item=>({...item}))
- });
-
- save();
- render();
-
- document.getElementById("qrResult").scrollIntoView({
-  behavior:"smooth"
- });
+ cart=[];
+ save();renderAll();
 }
 
 function closeQR(){
- document.getElementById("qrResult").hidden=true;
+ document.getElementById("qrSection").classList.add("hidden");
 }
 
-function deleteProduct(id){
- if(cart.some(item=>item.id===id)){
-  alert("先にカートからこの商品を削除してください。");
-  return;
+function renderHistory(){
+ const area=document.getElementById("historyList");
+ area.innerHTML="";
+ if(!issued.length){
+  area.textContent="QR発行履歴はありません。";
  }
+ issued.forEach(item=>{
+  const row=document.createElement("div");
+  row.className="history-item";
+  const title=document.createElement("strong");
+  title.textContent=yen(item.amount);
+  const date=document.createElement("p");
+  const parsed=new Date(item.date);
+  date.textContent=isNaN(parsed.getTime())?"日時不明":parsed.toLocaleString("ja-JP");
+  const status=document.createElement("span");
+  status.className="status";
+  status.textContent=item.status==="issued"?"QR発行済み・決済未確認":"状態不明";
+  row.append(title,date,status);
+  area.appendChild(row);
+ });
+}
 
- if(!confirm("この商品を削除しますか？"))return;
+function renderDashboard(){
+ const amount=issued.reduce((sum,item)=>sum+Number(item.amount||0),0);
+ document.getElementById("totalIssued").textContent=yen(amount);
+ document.getElementById("issuedCount").textContent=issued.length;
+}
 
- products=products.filter(p=>p.id!==id);
- save();
- render();
+function renderAll(){
+ renderProducts();
+ renderCart();
+ renderHistory();
+ renderDashboard();
+}
+
+function exportData(){
+ const data={products,cart,issued,exportedAt:new Date().toISOString()};
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;
+ a.download="qrpay-store-demo-backup.json";
+ a.click();
+ URL.revokeObjectURL(url);
 }
 
 function resetDemo(){
- if(!confirm("商品・カート・会計履歴を初期化しますか？"))return;
-
- localStorage.removeItem(productKey);
- localStorage.removeItem(cartKey);
- localStorage.removeItem(salesKey);
-
- products=[...initialProducts];
+ if(!confirm("商品・カート・QR発行履歴をすべて初期化しますか？"))return;
+ products=[...defaults];
  cart=[];
  issued=[];
-
- document.getElementById("qrResult").hidden=true;
- save();
- render();
+ save();renderAll();closeQR();
 }
 
-render();
-</script>
- <section style="background:#fff;color:#111;padding:16px;margin:16px 0;border:1px solid #ddd;border-radius:12px;">
-  <h2>決済確認ステータス</h2>
-  <p>QR発行履歴を確認できます。ここでの確認は店舗側の手動記録であり、実際の決済確認ではありません。</p>
-  <div id="paymentStatusList"></div>
-</section>
-
-<script>
-function renderPaymentStatuses() {
-  const history = JSON.parse(
-    localStorage.getItem("qrpay_store_issued") || "[]"
-  );
-
-  const area = document.getElementById("paymentStatusList");
-
-  if (!history.length) {
-    area.textContent = "QR発行履歴はありません。";
-    return;
-  }
-
-  area.innerHTML = "";
-
-  history.forEach((item, index) => {
-    const card = document.createElement("div");
-    card.style.cssText =
-      "padding:12px;margin:10px 0;border:1px solid #ddd;border-radius:8px;";
-
-    const title = document.createElement("strong");
-    title.textContent =
-      "¥" + Number(item.amount || 0).toLocaleString("ja-JP");
-
-    const status = document.createElement("p");
-    status.textContent = "状態：QR発行済み・決済未確認";
-
-    card.append(title, status);
-    area.appendChild(card);
-  });
-}
-
-renderPaymentStatuses();
+renderAll();
 </script>
 </body>
 </html>
