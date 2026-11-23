@@ -752,14 +752,17 @@ function buildProductLabel(product){
 }
 function printProductLabels(list){
  if(!Array.isArray(list)||!list.length){alert("印刷する商品がありません。");return;}
- if(typeof JsBarcode==="undefined"){alert("バーコード印刷機能を読み込めません。ページを再読み込みしてください。");return;}
- list.forEach(ensureProductBarcode);save();renderAll();
- const area=document.getElementById("barcodeLabelPrint");area.innerHTML="";
- list.forEach(product=>area.appendChild(buildProductLabel(product)));
- document.body.classList.add("qrpay-print-labels");
- const cleanup=()=>{document.body.classList.remove("qrpay-print-labels");area.innerHTML="";};
- window.addEventListener("afterprint",cleanup,{once:true});
- requestAnimationFrame(()=>window.print());
+ if(typeof JsBarcode==="undefined"){alert("バーコード印刷機能を読み込めません。通信状態を確認して再読み込みしてください。");return;}
+ const printWindow=window.open("","_blank");
+ if(!printWindow){alert("印刷画面を開けませんでした。ブラウザのポップアップを許可して、もう一度お試しください。");return;}
+ try{
+  list.forEach(ensureProductBarcode);save();renderAll();
+  const labels=list.map(product=>buildProductLabel(product).outerHTML).join("");
+  const html='<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>商品バーコードラベル</title><style>'+
+  '@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#000;font-family:Arial,sans-serif}.sheet{display:grid;grid-template-columns:repeat(3,50mm);grid-auto-rows:30mm;gap:3mm;align-content:start;justify-content:start}.barcode-label{width:50mm;height:30mm;overflow:hidden;border:1px dashed #bbb;padding:1.5mm 2mm;display:flex;flex-direction:column;justify-content:space-between;break-inside:avoid;page-break-inside:avoid;color:#000;background:#fff}.barcode-label-name{font-size:8pt;font-weight:700;line-height:1.15;max-height:7mm;overflow:hidden;overflow-wrap:anywhere}.barcode-label-price{font-size:10pt;font-weight:800;text-align:right;line-height:1}.barcode-label svg{display:block;width:100%;height:13mm;max-height:13mm}.barcode-label-code{font-size:6.5pt;letter-spacing:.4px;text-align:center;line-height:1}.actions{padding:12px;text-align:center;font:14px sans-serif}@media print{.actions{display:none}}'+
+  '</style></head><body><div class="actions">A4・50×30mmラベル '+list.length+'枚分 — 印刷設定で「実際のサイズ／倍率100%」を選択してください。 <button onclick="window.print()">印刷する</button></div><main class="sheet">'+labels+'</main><script>window.addEventListener("load",()=>setTimeout(()=>window.print(),350));<\/script></body></html>';
+  printWindow.document.open();printWindow.document.write(html);printWindow.document.close();
+ }catch(error){printWindow.close();alert("ラベルの印刷画面を作成できませんでした。商品情報を確認してください。");}
 }
 function printProductLabel(id){const product=products.find(p=>p.id===id);if(product)printProductLabels([product]);}
 function issueMissingProductBarcodes(){
