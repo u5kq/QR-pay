@@ -115,6 +115,7 @@ details.panel summary{cursor:pointer}
     <button class="secondary" onclick="showScanner()">
       QRコードを読み取る
     </button>
+    <button class="secondary" onclick="showTopUp()">デモチャージ</button>
   </section>
 
 <section id="content">
@@ -163,6 +164,35 @@ function showPayment() {
   document.getElementById("content").innerHTML =
     "<h2>支払い用バーコード</h2>" +
     "<p>バーコード機能は次の開発工程で実装します。</p>";
+}
+
+function showTopUp() {
+  document.getElementById("content").innerHTML = `
+    <h2>デモチャージ</h2>
+    <section class="panel">
+      <p>現在のデモ残高</p>
+      <h2>¥${getBalance().toLocaleString("ja-JP")}</h2>
+      <p class="note">練習用の仮想残高です。実際の入金や店舗でのチャージは行われません。</p>
+      <label for="demoTopUpAmount">チャージ金額</label>
+      <select id="demoTopUpAmount">
+        <option value="500">¥500</option><option value="1000" selected>¥1,000</option>
+        <option value="3000">¥3,000</option><option value="5000">¥5,000</option>
+      </select>
+      <button class="primary" onclick="confirmDemoTopUp()">デモ残高に追加</button>
+    </section>`;
+}
+function confirmDemoTopUp() {
+  const amount=Number(document.getElementById("demoTopUpAmount")?.value);
+  if(![500,1000,3000,5000].includes(amount)){alert("金額を選び直してください。");return;}
+  if(!confirm("デモ残高に¥"+amount.toLocaleString("ja-JP")+"を追加しますか？\\n実際のお金は動きません。"))return;
+  const next=getBalance()+amount;
+  if(!Number.isSafeInteger(next)||next>1000000){alert("デモ残高の上限を超えます。");return;}
+  const history=JSON.parse(localStorage.getItem(historyKey)||"[]");
+  history.unshift({requestId:"TOPUP-"+crypto.randomUUID(),store:"QR PAY DEMO CHARGE",amount,date:new Date().toLocaleString("ja-JP"),type:"topup",status:"demo-topup"});
+  localStorage.setItem(balanceKey,String(next));
+  localStorage.setItem(historyKey,JSON.stringify(history));
+  showBalance();showHome();
+  document.getElementById("content").innerHTML="<section class='panel'><h2>デモチャージ完了</h2><p>追加額：¥"+amount.toLocaleString("ja-JP")+"</p><p>新しい残高：¥"+next.toLocaleString("ja-JP")+"</p><p class='note'>デモ記録のみです。実際の入金ではありません。</p><button class='primary' onclick='showHome()'>ホームへ戻る</button></section>";
 }
 
 async function showScanner() {
@@ -426,9 +456,9 @@ function showHistory() {
             </summary>
             <hr>
             <p>店舗：${escapeHTML(item.store)}</p>
-            <p>決済金額：¥${Number(item.amount).toLocaleString("ja-JP")}</p>
+            <p>${item.type === "topup" ? "チャージ金額" : "決済金額"}：¥${Number(item.amount).toLocaleString("ja-JP")}</p>
             <p>決済日時：${escapeHTML(item.date)}</p>
-            <p>状態：${item.status === "cancelled" ? "取消済み（デモ）" : "デモ決済完了"}</p>
+            <p>状態：${item.status === "cancelled" ? "取消済み（デモ）" : item.type === "topup" ? "デモチャージ" : "デモ決済完了"}</p>
             <p>取引番号：${escapeHTML(item.requestId)}</p>
             ${item.status === "cancelled" ? "" : `<button class="secondary" onclick="cancelDemoPayment('${escapeHTML(item.requestId)}')">このデモ決済を取り消す</button>`}
           </details>
