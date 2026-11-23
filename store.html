@@ -1488,6 +1488,86 @@ renderAll();
   kioskMethods.insertAdjacentElement("afterend",map.firstElementChild);
  }
 })();
+
+/* V4.0 cashier-first workspace: keep frequent actions visible, tuck setup/admin away. */
+(function(){
+ const main=document.querySelector("main"),cart=document.getElementById("posCart"),catalog=document.getElementById("posCatalog");
+ if(!main||!cart||!catalog)return;
+ const makeDetails=(id,title)=>{let d=document.getElementById(id);if(d)return d;d=document.createElement("details");d.className="pos-advanced pos-tools-drawer";d.id=id;const summary=document.createElement("summary");summary.textContent=title;const body=document.createElement("div");body.className="pos-advanced-body";d.append(summary,body);return d;};
+ const move=(node,parent)=>{if(node&&parent)parent.appendChild(node);};
+ // Put non-selling dashboard and reference widgets inside a single closed drawer.
+ const admin=makeDetails("posAdminDrawer","店舗管理・レポート・データ管理");
+ const adminBody=admin.querySelector(".pos-advanced-body");
+ const dashboard=[...main.querySelectorAll(":scope > section")].find(x=>x.querySelector("h2")?.textContent.includes("STORE DASHBOARD"));
+ move(dashboard,adminBody);
+ const tools=document.getElementById("qrV3Tools");move(tools,adminBody);
+ const reports=[...main.querySelectorAll(":scope > section")].filter(x=>/営業レポート|取引管理|データ管理/.test(x.querySelector("h2")?.textContent||""));
+ reports.forEach(x=>move(x,adminBody));
+ const maps=[...document.querySelectorAll(".acceptance-map")];
+ maps.forEach((m,i)=>{if(i===0)move(m,adminBody);else m.remove();});
+ // Put less frequent cart adjustments in a collapsed drawer while keeping total and tender actions visible.
+ const cartList=document.getElementById("cartList");
+ const metric=cart.querySelector(".metric");
+ const discount=document.getElementById("discountAmount")?.closest(".grid");
+ const cashLabel=[...cart.querySelectorAll("label")].find(x=>x.textContent.includes("お預かり金額"));
+ const cashInput=document.getElementById("cashTendered");
+ const change=document.getElementById("changeDue");
+ const options=makeDetails("posSaleOptions","割引・税率・現金のお預かり設定");
+ const optionBody=options.querySelector(".pos-advanced-body");
+ move(discount,optionBody);move(cashLabel,optionBody);move(cashInput,optionBody);move(change,optionBody);
+ if(metric&&options.parentElement!==cart)metric.insertAdjacentElement("beforebegin",options);
+ // Rebuild the visible cashier action strip without replacing existing handlers.
+ const actionRow=cart.querySelector(".row:last-of-type");
+ if(actionRow){
+  actionRow.classList.add("pos-main-actions");
+  const buttons=[...actionRow.querySelectorAll("button")];
+  buttons.forEach((b,i)=>{if(i===0)b.textContent="QR会計";if(i===1)b.textContent="現金会計";if(i===2)b.textContent="取消";if(i===3)b.textContent="操作を戻す";});
+ }
+ // Search and scanner are the first controls staff encounter.
+ const filter=document.getElementById("productFilter");
+ if(filter){filter.placeholder="商品名・JANコードを検索";filter.setAttribute("aria-label","商品名・JANコードを検索");}
+ const head=document.querySelector(".pos-workspace-heading");
+ if(head){const meta=head.querySelector("small");if(meta)meta.textContent="商品を検索・選択 → カート確認 → お会計";}
+ // Management drawers are closed by default and visually separated from selling.
+ if(!admin.parentElement)main.appendChild(admin);
+ // The receipt is an output area, not a permanent part of the active sales workspace.
+ const receipt=document.getElementById("receiptSection");
+ if(receipt)receipt.classList.add("pos-receipt-output");
+ const style=document.createElement("style");
+ style.textContent=`
+ body:not(.self-mode) main{max-width:1500px!important;padding:12px 18px 30px!important;gap:10px!important}
+ body:not(.self-mode) #posWorkspace{border:0;background:transparent;padding:0;box-shadow:none}
+ body:not(.self-mode) .pos-workspace-heading{padding:5px 3px 10px;margin:0}
+ body:not(.self-mode) .pos-workspace-heading strong{font-size:21px}
+ body:not(.self-mode) #posColumns{grid-template-columns:minmax(0,1.25fr) minmax(390px,.75fr);gap:12px;align-items:start}
+ body:not(.self-mode) #posCatalog,body:not(.self-mode) #posCart{border:1px solid #dededb;border-radius:12px;background:#fff;padding:14px}
+ body:not(.self-mode) #posCart{position:sticky;top:12px;background:#fafaf9}
+ body:not(.self-mode) #posCatalog #productFilter{height:52px;border:1px solid #cfcfcb;border-radius:8px;padding:0 14px;font-size:16px}
+ body:not(.self-mode) #productList{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+ body:not(.self-mode) #productList .product{border:1px solid #e5e5e1;border-radius:9px;padding:10px;box-shadow:none}
+ body:not(.self-mode) #productList .product button{min-height:42px;border-radius:7px}
+ body:not(.self-mode) #cartList{max-height:34vh;overflow:auto}
+ body:not(.self-mode) #posCart .total{font-size:29px;padding:12px 0;margin:8px 0;text-align:right;border-top:1px solid #ddd}
+ body:not(.self-mode) #posCart .pos-main-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+ body:not(.self-mode) #posCart .pos-main-actions button{min-height:54px;font-size:15px;font-weight:800;border-radius:9px;margin:0}
+ body:not(.self-mode) #posCart .pos-main-actions #issueButton{background:#171717;color:#fff}
+ body:not(.self-mode) #posCart .pos-main-actions #cashButton{background:#fff;color:#111;border:1px solid #aaa}
+ body:not(.self-mode) #posCart .pos-main-actions button:nth-child(n+3){min-height:40px;font-size:12px}
+ body:not(.self-mode) .pos-sale-options{margin-top:8px}
+ body:not(.self-mode) .pos-tools-drawer{margin:0;border-radius:10px}
+ body:not(.self-mode) #posAdminDrawer{margin-top:4px}
+ body:not(.self-mode) #posAdminDrawer summary{min-height:48px;font-size:13px}
+ body:not(.self-mode) #posSaleOptions summary{min-height:42px;padding:10px 12px;font-size:12px}
+ body:not(.self-mode) .acceptance-map{margin:10px 0}
+ body:not(.self-mode) #qrSection{width:100%}
+ @media(max-width:850px){body:not(.self-mode) #posColumns{grid-template-columns:1fr}body:not(.self-mode) #posCart{position:static;order:2}body:not(.self-mode) #cartList{max-height:260px}}
+ `;
+ document.head.appendChild(style);
+ // Prevent admin drawer from appearing in customer kiosk mode.
+ const observer=new MutationObserver(()=>{admin.hidden=document.body.classList.contains("self-mode");});
+ observer.observe(document.body,{attributes:true,attributeFilter:["class"]});
+ admin.hidden=document.body.classList.contains("self-mode");
+})();
 </script>
 </body>
 </html>
