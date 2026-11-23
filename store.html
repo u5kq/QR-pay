@@ -46,26 +46,32 @@ button:disabled{opacity:.4}
 #qrcode img{max-width:100%}
 .hidden{display:none}
 footer{text-align:center;color:#888;font-size:11px;padding:20px}
-#receiptSection{max-width:480px;margin:18px auto}
-#receiptPrint{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#171717;background:#fff;padding:24px 22px;max-width:360px;margin:0 auto;border:1px solid #e8e8e4;box-shadow:0 8px 28px rgba(0,0,0,.06);font-size:12px;line-height:1.55}
-.receipt-brand{text-align:center;font-size:11px;letter-spacing:3px;font-weight:700}
-.receipt-store{text-align:center;font-size:19px;font-weight:800;letter-spacing:.04em;margin:5px 0}
+#receiptSection{max-width:100%;margin:18px auto}
+#receiptPrint{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#171717;background:#fff;padding:30px 34px;width:100%;max-width:760px;min-height:420px;margin:0 auto;border:1px solid #e8e8e4;box-shadow:0 8px 28px rgba(0,0,0,.06);font-size:14px;line-height:1.65}
+.receipt-brand{text-align:center;font-size:12px;letter-spacing:4px;font-weight:700}
+.receipt-store{text-align:center;font-size:25px;font-weight:800;letter-spacing:.04em;margin:7px 0}
 .receipt-center{text-align:center}
-.receipt-sub{text-align:center;color:#666;font-size:10px;letter-spacing:.08em}
-.receipt-line{border-top:1px dashed #aaa;margin:13px 0}
-.receipt-meta{display:flex;justify-content:space-between;gap:8px;font-size:10px;color:#555;padding:2px 0}
-.receipt-items-head{display:grid;grid-template-columns:1fr 38px 72px;gap:5px;font-size:10px;color:#666;border-bottom:1px solid #ddd;padding:0 0 5px}
-.receipt-row{display:grid;grid-template-columns:1fr 38px 72px;gap:5px;align-items:start;padding:6px 0;font-size:11px;border-bottom:1px dotted #eee}
+.receipt-sub{text-align:center;color:#666;font-size:11px;letter-spacing:.12em}
+.receipt-line{border-top:1px dashed #aaa;margin:18px 0}
+.receipt-meta{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:#555;padding:4px 0}
+.receipt-items-head{display:grid;grid-template-columns:minmax(0,1fr) 90px 150px;gap:12px;font-size:12px;color:#666;border-bottom:1px solid #ddd;padding:0 0 9px}
+.receipt-row{display:grid;grid-template-columns:minmax(0,1fr) 90px 150px;gap:12px;align-items:start;padding:10px 0;font-size:14px;border-bottom:1px dotted #eee}
 .receipt-row span:last-child{text-align:right}
 .receipt-row strong{text-align:right;font-weight:700}
-.receipt-total-wrap{background:#f7f7f5;border:1px solid #e9e9e5;border-radius:8px;padding:10px 12px;margin:12px 0}
-.receipt-total{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;font-weight:700}
-.receipt-total strong{font-size:23px;letter-spacing:-.8px}
-.receipt-note{text-align:center;font-size:10px;color:#555;line-height:1.6}
-.receipt-footer{text-align:center;font-size:9px;color:#777;line-height:1.7}
-.receipt-stamp{display:inline-block;border:1px solid #aaa;padding:3px 8px;border-radius:3px;font-size:9px;letter-spacing:.1em;margin:8px auto}
+.receipt-total-wrap{background:#f7f7f5;border:1px solid #e9e9e5;border-radius:8px;padding:16px 20px;margin:18px 0}
+.receipt-total{display:flex;justify-content:space-between;align-items:baseline;font-size:15px;font-weight:700}
+.receipt-total strong{font-size:30px;letter-spacing:-.8px}
+.receipt-note{text-align:center;font-size:12px;color:#555;line-height:1.7}
+.receipt-footer{text-align:center;font-size:11px;color:#777;line-height:1.8}
+.receipt-stamp{display:inline-block;border:1px solid #aaa;padding:4px 11px;border-radius:3px;font-size:10px;letter-spacing:.12em;margin:10px auto}
 @media print{
- #receiptPrint{border:0;box-shadow:none;padding:0;font-size:11px}
+ @page{size:A4 portrait;margin:14mm}
+ body *{visibility:hidden!important}
+ #receiptSection,#receiptSection *{visibility:visible!important}
+ #receiptSection{position:absolute;left:0;top:0;width:100%;margin:0;padding:0}
+ #receiptPrint{box-sizing:border-box;width:100%;max-width:none;min-height:0;border:0;box-shadow:none;padding:8mm 7mm;font-size:12pt}
+ .receipt-items-head{grid-template-columns:minmax(0,1fr) 25mm 38mm}
+ .receipt-row{grid-template-columns:minmax(0,1fr) 25mm 38mm}
 }
 @media print{
  @page{size:80mm auto;margin:5mm}
