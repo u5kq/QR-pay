@@ -762,60 +762,7 @@ function printProductLabels(list){
   const labels=pages.join('');
   const html='<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>商品バーコードラベル</title><style>'+
   '@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#000;font-family:Arial,sans-serif}.sheet{width:186mm;height:268mm;display:grid;grid-template-columns:repeat(4,45mm);grid-template-rows:repeat(10,25mm);gap:2mm;align-content:start;justify-content:center;margin:0 auto;break-after:page;page-break-after:always}.sheet:last-of-type{break-after:auto;page-break-after:auto}.barcode-label{width:45mm;height:25mm;overflow:hidden;border:1px dashed #bbb;padding:1mm 1.5mm;display:flex;flex-direction:column;justify-content:space-between;break-inside:avoid;page-break-inside:avoid;color:#000;background:#fff}.barcode-label-name{font-size:7pt;font-weight:700;line-height:1.1;max-height:5mm;overflow:hidden;overflow-wrap:anywhere}.barcode-label-price{font-size:8.5pt;font-weight:800;text-align:right;line-height:1}.barcode-label svg{display:block;width:100%;height:10mm;max-height:10mm}.barcode-label-code{font-size:5.5pt;letter-spacing:.3px;text-align:center;line-height:1}.actions{padding:12px;text-align:center;font:14px sans-serif}@media print{.actions{display:none}.sheet{margin:0 auto}}'+
-  '</style></head><body><div class="actions">A4・45×25mmラベル／1ページ最大40枚・合計 '+list.length+'枚分 — 印刷設定で「実際のサイズ／倍率100%」を選択してください。 <button onclick="window.print()">印刷する</button></div><main class="sheet">'+labels+'</main><script>window.addEventListener("load",()=>setTimeout(()=>window.print(),350));<\/script>
-<script>
-/* V4.4 checkout output moved above the product workspace */
-(function(){
- const setup=()=>{
-  const workspace=document.getElementById("posWorkspace");
-  const columns=document.getElementById("posColumns");
-  const qr=document.getElementById("qrSection");
-  const receipt=document.getElementById("receiptSection");
-  if(!workspace||!columns||!qr||!receipt||document.getElementById("posCheckoutOutput"))return;
-  const output=document.createElement("div");
-  output.id="posCheckoutOutput";
-  output.setAttribute("aria-label","支払いQRコードとレシート");
-  const heading=document.createElement("div");
-  heading.className="pos-output-heading";
-  heading.innerHTML="<strong>お会計・レシート</strong><span>CHECKOUT OUTPUT / DEMO</span>";
-  const panels=document.createElement("div");
-  panels.className="pos-output-panels";
-  panels.append(qr,receipt);
-  output.append(heading,panels);
-  workspace.insertBefore(output,columns);
- };
- if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",setup,{once:true});
- else setup();
-})();
-</script>
-<style>
-#posCheckoutOutput{margin:0 0 15px;padding:14px;border:1px solid #dededb;border-radius:14px;background:#f8f8f7}
-.pos-output-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px}
-.pos-output-heading strong{font-size:16px}
-.pos-output-heading span{font-size:10px;letter-spacing:.12em;color:#777}
-.pos-output-panels{display:grid;grid-template-columns:minmax(250px,.85fr) minmax(320px,1.15fr);gap:12px;align-items:start}
-#posCheckoutOutput #qrSection,#posCheckoutOutput #receiptSection{min-width:0;margin:0!important;padding:14px!important;border:1px solid #e3e3e0!important;border-radius:12px;background:#fff!important}
-#posCheckoutOutput #qrSection h2{margin:0 0 8px;font-size:15px}
-#posCheckoutOutput #qrArea{padding:6px}
-#posCheckoutOutput #qrcode{margin:8px auto}
-#posCheckoutOutput #qrcode img{width:190px;height:190px;max-width:100%;object-fit:contain}
-#posCheckoutOutput #receiptPrint{margin:0 auto 10px;box-shadow:none;border:1px dashed #ccc}
-#posCheckoutOutput #receiptSection .no-print{display:flex;gap:8px}
-#posCheckoutOutput #receiptSection .no-print button{flex:1;min-width:0}
-#posCheckoutOutput #receiptSection>.muted{margin-bottom:0}
-@media(max-width:760px){
- #posCheckoutOutput{padding:10px}
- .pos-output-panels{grid-template-columns:1fr}
- #posCheckoutOutput #qrcode img{width:170px;height:170px}
-}
-@media print{
- #posCheckoutOutput{display:block!important;border:0!important;padding:0!important}
- #posCheckoutOutput .pos-output-heading,#posCheckoutOutput #qrSection{display:none!important}
- #posCheckoutOutput #receiptSection{display:block!important}
-}
-</style>
-
-</body></html>';
+  '</style></head><body><div class="actions">A4・45×25mmラベル／1ページ最大40枚・合計 '+list.length+'枚分 — 印刷設定で「実際のサイズ／倍率100%」を選択してください。 <button onclick="window.print()">印刷する</button></div><main class="sheet">'+labels+'</main><script>window.addEventListener("load",()=>setTimeout(()=>window.print(),350));<\/script></body></html>';
   printWindow.document.open();printWindow.document.write(html);printWindow.document.close();
  }catch(error){printWindow.close();alert("ラベルの印刷画面を作成できませんでした。商品情報を確認してください。");}
 }
@@ -981,7 +928,6 @@ function issueQR(){
   "有効期限："+new Date(expiresAt).toLocaleTimeString("ja-JP");
  document.getElementById("qrSection").classList.remove("hidden");
  renderReceipt(record);
- document.getElementById("receiptSection").classList.remove("hidden");
 
  cart=[];
  save();renderAll();
