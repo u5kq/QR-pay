@@ -411,9 +411,22 @@ function cancelDemoPayment(requestId) {
   showHistory();
 }
 
+const qrFavoritesKey="qrpay_demo_favorite_stores";
+function qrGetFavorites(){try{return JSON.parse(localStorage.getItem(qrFavoritesKey)||"[]");}catch(e){return [];}}
+function qrToggleFavorite(store){const list=qrGetFavorites();const next=list.includes(store)?list.filter(x=>x!==store):list.concat([store]);localStorage.setItem(qrFavoritesKey,JSON.stringify(next));showHistory();}
+function qrMonthlyReport(){
+ const rows={};
+ JSON.parse(localStorage.getItem(historyKey)||"[]").filter(x=>x.type!=="topup"&&x.status!=="cancelled").forEach(x=>{const d=new Date(x.date);if(isNaN(d.getTime()))return;const k=d.getFullYear()+"年"+(d.getMonth()+1)+"月";rows[k]=(rows[k]||0)+Number(x.amount||0);});
+ const box=document.getElementById("content");box.innerHTML="<h2>月別利用レポート</h2>";
+ Object.keys(rows).sort().reverse().forEach(k=>{const p=document.createElement("p");p.className="panel";p.textContent=k+"：¥"+rows[k].toLocaleString("ja-JP");box.appendChild(p);});
+ if(!Object.keys(rows).length){const p=document.createElement("p");p.textContent="利用記録はまだありません。";box.appendChild(p);}
+ const b=document.createElement("button");b.textContent="履歴へ戻る";b.onclick=showHistory;box.appendChild(b);
+}
+function qrBackup(){const data={type:"QR_PAY_DEMO_BACKUP",balance:getBalance(),history:JSON.parse(localStorage.getItem(historyKey)||"[]"),favorites:qrGetFavorites(),exportedAt:new Date().toISOString()};const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="qrpay-wallet-demo-backup.json";a.click();URL.revokeObjectURL(url);}
+function qrFilterHistory(){const q=(document.getElementById("historySearch")?.value||"").toLowerCase();document.querySelectorAll("#content details.panel").forEach(el=>{el.style.display=el.textContent.toLowerCase().includes(q)?"":"none";});}
 function showSettings(){
  const content=document.getElementById("content");
- content.innerHTML='<section class="panel"><h2>設定</h2><p>QR PAY DEMO</p><p class="note">このアプリはデモ専用です。実際の決済・入金は行いません。</p><button class="secondary" onclick="showHome()">ホームに戻る</button></section>';
+ content.innerHTML='<section class="panel"><h2>設定</h2><p>QR PAY DEMO</p><p class="note">このアプリはデモ専用です。実際の決済・入金は行いません。</p><button class="secondary" onclick="qrMonthlyReport()">月別利用レポート</button><button class="secondary" onclick="qrBackup()">データをバックアップ</button><button class="secondary" onclick="showHistory()">取引履歴</button><button class="secondary" onclick="showHome()">ホームに戻る</button></section>';
 }
 function showHome() {
   const history = JSON.parse(
@@ -432,7 +445,7 @@ function showHome() {
   });
 
   const activeMonth = thisMonth.filter(item => item.status !== "cancelled");
-  const total = activeMonth.reduce(
+  const total = activeMonth.filter(item=>item.type!=="topup").reduce(
     (sum, item) => sum + Number(item.amount || 0),
     0
   );
@@ -471,13 +484,13 @@ function showHistory() {
   })[char]);
 
   const activeHistory = history.filter(item => item.status !== "cancelled");
-  const total = activeHistory.reduce(
+  const total = activeHistory.filter(item=>item.type!=="topup").reduce(
     (sum, item) => sum + Number(item.amount || 0),
     0
   );
 
   content.innerHTML = `
-    <h2>取引履歴</h2>
+    <h2>取引履歴</h2><input id="historySearch" placeholder="店舗名・取引番号で検索" oninput="qrFilterHistory()"><button class="secondary" onclick="qrMonthlyReport()">月別レポート</button>
 
     <div class="panel">
       <p>累計利用額</p>
@@ -506,6 +519,7 @@ function showHistory() {
         `).join("")
     }
   `;
+  qrFilterHistory();
 }
 
 </script>
