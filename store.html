@@ -169,8 +169,8 @@ footer{color:#999;padding:24px}
   <h2>バーコード読み取り</h2>
   <div class="row"><input id="barcodeSearch" inputmode="numeric" placeholder="バーコード番号を入力"><button onclick="lookupBarcode()">商品を検索</button></div>
   <div id="barcode-reader" style="width:100%;max-width:480px;margin:10px auto"></div>
-  <div class="row"><button onclick="startBarcodeScanner()">カメラで読み取る</button><button class="secondary" onclick="stopBarcodeScanner()">読み取り停止</button></div>
-  <p class="muted">カメラ利用には許可が必要です。読み取れない場合は番号を手入力できます。</p>
+  <div class="row"><button onclick="startBarcodeScanner()">カメラで読み取る</button><button class="secondary" onclick="focusBarcodeCamera()">ピントを再調整</button><button class="secondary" onclick="stopBarcodeScanner()">読み取り停止</button></div>
+  <p class="muted">対応カメラでは連続オートフォーカスを自動設定します。「ピントを再調整」で再適用できます。端末・ブラウザによってはカメラ側が対応せず、反映されない場合があります。</p>
   <div id="barcodeMessage" class="muted" aria-live="polite"></div>
 </section>
 
@@ -219,7 +219,8 @@ footer{color:#999;padding:24px}
 
 <section>
   <h2>データ管理</h2>
-  <button class="secondary" onclick="exportData()">データを書き出す</button>
+  <button class="secondary" onclick="exportData()">JSONバックアップ</button>
+  <button class="secondary" onclick="exportCSV()">商品・取引CSVを書き出す</button>
   <button class="danger" onclick="resetDemo()">デモデータを初期化</button>
   <p class="muted">初期化すると商品・カート・発行履歴が消えます。</p>
 </section>
@@ -665,7 +666,26 @@ async function startBarcodeCamera(){
    stopBarcodeScanner();
   },()=>{});
   message.textContent=mode==="register"?"登録する商品のバーコードをカメラに映してください。":"登録済み商品のバーコードをカメラに映してください。";
+  try{
+   await barcodeScanner.applyVideoConstraints({advanced:[{focusMode:"continuous"}]});
+   message.textContent+=" オートフォーカスを設定しました。";
+  }catch(focusError){
+   message.textContent+=" この端末ではオートフォーカス制御に対応していない可能性があります。";
+  }
  }catch(e){message.textContent="カメラを開始できません。許可設定または番号の手入力を確認してください。";}
+}
+async function focusBarcodeCamera(){
+ const message=document.getElementById("barcodeMessage");
+ if(!barcodeScanner||!barcodeScanner.isScanning){
+  message.textContent="先に「カメラで読み取る」を押してください。";
+  return;
+ }
+ try{
+  await barcodeScanner.applyVideoConstraints({advanced:[{focusMode:"continuous"}]});
+  message.textContent="オートフォーカスを再適用しました。バーコードをカメラから少し離して映すと読み取りやすくなる場合があります。";
+ }catch(e){
+  message.textContent="この端末・ブラウザではピント制御に対応していない可能性があります。カメラとの距離や明るさを調整してください。";
+ }
 }
 async function stopBarcodeScanner(){
  if(barcodeScanner){try{if(barcodeScanner.isScanning)await barcodeScanner.stop();}catch(e){}}
@@ -685,6 +705,24 @@ function exportData(){
  URL.revokeObjectURL(url);
 }
 
+function exportCSV(){
+ const rows=[["種別","日時","商品・店舗","単価","数量","金額","状態","取引番号"]];
+ products.forEach(p=>rows.push(["商品","",p.name,p.price,"","","登録済み",p.id]));
+ issued.forEach(record=>{
+  const date=new Date(record.date);
+  const dateText=isNaN(date.getTime())?"":date.toLocaleString("ja-JP");
+  const status=record.status==="cancelled"?"取消済み":record.status==="cash-demo"?"現金デモ記録":"QR発行・決済未確認";
+  (Array.isArray(record.items)&&record.items.length?record.items:[{name:record.store||"取引",price:"",qty:""}]).forEach(item=>{
+   rows.push(["取引",dateText,item.name,item.price,item.qty,Number(item.price||0)*Number(item.qty||0),status,record.requestId]);
+  });
+ });
+ const csv="\\uFEFF"+rows.map(row=>row.map(value=>'"'+String(value??"").replace(/"/g,'""')+'"').join(",")).join("\\r\\n");
+ const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;a.download="qrpay-store-demo-data.csv";a.click();
+ URL.revokeObjectURL(url);
+}
 function resetDemo(){
  if(!confirm("商品・カート・QR発行履歴をすべて初期化しますか？"))return;
  products=[...defaults];
