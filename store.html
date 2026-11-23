@@ -437,6 +437,64 @@ body.self-kiosk-active #selfKiosk{display:flex;flex-direction:column}
 #selfKiosk #kioskContinuePayment{width:100%;min-height:58px;margin-top:8px;font-size:17px}
 #selfKiosk #kioskMethodSelectView{max-width:720px}
 #selfKiosk #kioskPaymentDetailView[hidden],#selfKiosk #kioskMethodSelectView[hidden]{display:none!important}
+
+/* V4.1 self-checkout kiosk: one viewport per step, no page scrolling. */
+#selfKiosk{overflow:hidden!important;height:100vh;height:100dvh;overscroll-behavior:none}
+body.self-kiosk-active{height:100vh;height:100dvh;overflow:hidden!important;touch-action:pan-x}
+#selfKiosk .kiosk-top{height:58px;flex:0 0 58px;padding:0 24px}
+#selfKiosk .kiosk-body{width:100%;height:calc(100vh - 58px);height:calc(100dvh - 58px);min-height:0;max-height:calc(100dvh - 58px);padding:14px 22px;overflow:hidden;justify-content:center}
+#selfKiosk .kiosk-screen{width:100%;max-height:100%;min-height:0;overflow:hidden}
+#selfKiosk .kiosk-screen.active{display:flex;align-items:center;justify-content:center}
+#selfKiosk .kiosk-card{width:min(1180px,100%);max-height:100%;overflow:hidden;padding:clamp(14px,2vw,24px);border-radius:18px}
+#selfKiosk h1{font-size:clamp(26px,3vw,40px);margin:7px 0}
+#selfKiosk .kiosk-lead{font-size:clamp(12px,1.25vw,15px);line-height:1.5;margin:6px 0}
+#selfKiosk .kiosk-steps{margin:0 0 9px}
+#selfKiosk .kiosk-steps span{padding:6px 11px}
+#selfKiosk .kiosk-scan-layout{grid-template-columns:minmax(0,1.1fr) minmax(280px,.9fr);gap:14px}
+#selfKiosk .kiosk-camera{min-height:clamp(130px,25vh,250px);max-height:30vh}
+#selfKiosk .kiosk-camera video{max-height:28vh!important;object-fit:contain!important}
+#selfKiosk .kiosk-scan-hint{font-size:11px;margin:5px 0}
+#selfKiosk .kiosk-scan-status{min-height:34px;padding:8px 11px;margin-top:6px;font-size:11px}
+#selfKiosk .kiosk-order-list{max-height:clamp(90px,22vh,210px);overflow-y:auto;overscroll-behavior:contain}
+#selfKiosk .kiosk-order-row{padding:7px 0;font-size:12px}
+#selfKiosk .kiosk-total{margin-top:8px;padding-top:8px}
+#selfKiosk .kiosk-total strong{font-size:clamp(22px,2.3vw,30px)}
+#selfKiosk .kiosk-primary{min-height:54px;margin-top:10px;border-radius:12px;font-size:16px}
+#selfKiosk .kiosk-secondary{min-height:42px;padding:8px 12px;border-radius:10px;font-size:12px}
+#selfKiosk .kiosk-method-grid{gap:8px;margin:8px 0}
+#selfKiosk .kiosk-method{min-height:76px;padding:10px;font-size:19px;border-radius:11px}
+#selfKiosk .kiosk-method strong{font-size:13px}
+#selfKiosk .kiosk-method small{font-size:10px}
+#selfKiosk #kioskContinuePayment{min-height:52px;margin-top:6px}
+#selfKiosk .kiosk-input{min-height:44px;font-size:15px}
+#selfKiosk .acceptance-map{display:none!important}
+#selfKiosk .kiosk-start-grid{gap:18px}
+#selfKiosk .kiosk-pay-mark{width:68px;height:68px;font-size:30px;margin-bottom:10px}
+#selfKiosk .kiosk-success h1{font-size:clamp(30px,4vw,48px)}
+#selfKiosk .kiosk-success-actions{display:flex;gap:10px;justify-content:center;margin-top:16px}
+#selfKiosk .kiosk-success-actions>*{flex:1;max-width:260px}
+@media(max-width:760px){
+ #selfKiosk .kiosk-top{height:50px;flex-basis:50px;padding:0 12px}
+ #selfKiosk .kiosk-body{height:calc(100dvh - 50px);max-height:calc(100dvh - 50px);padding:8px}
+ #selfKiosk .kiosk-screen.active{display:flex}
+ #selfKiosk .kiosk-card{padding:12px;border-radius:14px}
+ #selfKiosk .kiosk-scan-layout{grid-template-columns:minmax(0,1fr) minmax(0,.9fr);gap:8px}
+ #selfKiosk .kiosk-camera{min-height:110px;max-height:21vh;border-radius:10px}
+ #selfKiosk .kiosk-camera video{max-height:19vh!important}
+ #selfKiosk .kiosk-order-list{max-height:22vh}
+ #selfKiosk .kiosk-method{min-height:66px;padding:7px}
+ #selfKiosk .kiosk-start-grid{grid-template-columns:1fr .8fr;gap:10px}
+ #selfKiosk .kiosk-start-grid .kiosk-pay-mark{width:52px;height:52px}
+ #selfKiosk .kiosk-success-actions{gap:7px}
+}
+@media(max-height:620px){
+ #selfKiosk .kiosk-body{padding-top:5px;padding-bottom:5px}
+ #selfKiosk .kiosk-card{padding:10px}
+ #selfKiosk .kiosk-camera{min-height:100px;max-height:21vh}
+ #selfKiosk .kiosk-order-list{max-height:16vh}
+ #selfKiosk .kiosk-primary{min-height:44px}
+ #selfKiosk .kiosk-method{min-height:58px}
+}
 </style>
 </head>
 <body>
