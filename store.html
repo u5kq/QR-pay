@@ -1783,6 +1783,90 @@ renderAll();
  const style=document.createElement("style");style.textContent=css;document.head.appendChild(style);
 })();
 
+/* V5.1 usability pack — local favorites, category filters, held carts, and cashier shortcuts. */
+(function(){
+ const catalog=document.getElementById("posCatalog"),cartPanel=document.getElementById("posCart");
+ const list=document.getElementById("productList"),cartList=document.getElementById("cartList");
+ if(!catalog||!cartPanel||!list||!cartList)return;
+ const STORE_KEY="qrpay_v51_held_carts",FAV_KEY="qrpay_v51_favorites";
+ const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback}catch(e){return fallback}};
+ let held=read(STORE_KEY,[]),favorites=new Set(read(FAV_KEY,[])),category="すべて",onlyFavorites=false;
+ const persistHeld=()=>localStorage.setItem(STORE_KEY,JSON.stringify(held));
+ const persistFav=()=>localStorage.setItem(FAV_KEY,JSON.stringify([...favorites]));
+ const bar=document.createElement("div");bar.id="posCatalogTools";
+ bar.innerHTML='<div class="pos-tool-line"><div><strong>商品をすばやく探す</strong><small>カテゴリやお気に入りで絞り込めます</small></div><button type="button" id="posFavOnly" aria-pressed="false">☆ お気に入り</button></div><div id="posCategoryChips" class="pos-category-chips"></div><div class="pos-tool-line pos-shortcut-hint"><small>ショートカット：F2 商品検索 ／ F3 バーコード入力欄</small><button type="button" id="posClearFilters">絞り込み解除</button></div>';
+ const search=document.getElementById("productFilter");if(search)catalog.insertBefore(bar,search);
+ const hold=document.createElement("section");hold.id="posHeldCartTools";
+ hold.innerHTML='<div class="pos-held-head"><div><strong>保留カート</strong><small>接客中のカートを保存して、あとで戻せます</small></div><button type="button" id="posHoldCart">＋ このカートを保留</button></div><div id="posHeldList"></div>';
+ cartPanel.insertBefore(hold,cartList);
+ function currentCategories(){return [...new Set((products||[]).map(p=>String(p.category||"カテゴリ未設定")).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ja"));}
+ function renderChips(){
+  const area=document.getElementById("posCategoryChips");if(!area)return;
+  const cats=["すべて",...currentCategories()];
+  area.innerHTML=cats.map(c=>'<button type="button" class="pos-category-chip '+(category===c?"active":"")+'" data-category="'+escapeHTML(c)+'">'+escapeHTML(c)+'</button>').join("");
+  area.querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{category=b.dataset.category;renderChips();renderProducts();}));
+ }
+ function decorateProducts(){
+  const cards=[...list.children];
+  cards.forEach(card=>{
+   const name=card.querySelector("strong")?.textContent||"";
+   const product=products.find(p=>p.name===name);
+   if(!product)return;
+   card.dataset.productId=String(product.id);
+   const cat=String(product.category||"カテゴリ未設定");
+   const fav=favorites.has(String(product.id));
+   card.hidden=(category!=="すべて"&&category!==cat)||(onlyFavorites&&!fav);
+   if(!card.querySelector(".pos-favorite")){
+    const b=document.createElement("button");b.type="button";b.className="pos-favorite secondary";
+    b.addEventListener("click",e=>{e.stopPropagation();const id=String(product.id);if(favorites.has(id))favorites.delete(id);else favorites.add(id);persistFav();decorateProducts();});
+    card.appendChild(b);
+   }
+   const button=card.querySelector(".pos-favorite");button.textContent=fav?"★ お気に入り":"☆ お気に入り";button.setAttribute("aria-pressed",String(fav));
+  });
+  const visible=cards.filter(c=>!c.hidden).length;
+  let note=document.getElementById("posProductCount");if(!note){note=document.createElement("p");note.id="posProductCount";note.className="pos-product-count";list.before(note);}
+  note.textContent="表示中 "+visible+" / "+cards.length+" 商品";
+ }
+ if(typeof window.renderProducts==="function"&&!window.__v51RenderWrapped){
+  const original=window.renderProducts;window.renderProducts=function(){original.apply(this,arguments);decorateProducts();};window.__v51RenderWrapped=true;
+ }
+ document.getElementById("posFavOnly").addEventListener("click",e=>{onlyFavorites=!onlyFavorites;e.currentTarget.classList.toggle("active",onlyFavorites);e.currentTarget.setAttribute("aria-pressed",String(onlyFavorites));renderProducts();});
+ document.getElementById("posClearFilters").addEventListener("click",()=>{category="すべて";onlyFavorites=false;if(search)search.value="";document.getElementById("posFavOnly").classList.remove("active");document.getElementById("posFavOnly").setAttribute("aria-pressed","false");renderChips();renderProducts();});
+ function renderHeld(){
+  const area=document.getElementById("posHeldList");if(!area)return;area.innerHTML="";
+  if(!held.length){area.innerHTML='<p class="pos-held-empty">保留中のカートはありません。</p>';return;}
+  held.forEach((h,index)=>{
+   const row=document.createElement("div");row.className="pos-held-row";
+   const info=document.createElement("div");const title=document.createElement("strong");title.textContent=h.name||("保留カート "+(index+1));
+   const detail=document.createElement("small");detail.textContent=(h.items||[]).reduce((n,x)=>n+Number(x.qty||0),0)+"点 ・ "+yen((h.items||[]).reduce((n,x)=>n+Number(x.price||0)*Number(x.qty||0),0))+" ・ "+new Date(h.savedAt).toLocaleString("ja-JP");
+   info.append(title,detail);
+   const actions=document.createElement("div");
+   const restore=document.createElement("button");restore.type="button";restore.textContent="復元";restore.addEventListener("click",()=>{if(cart.length&&!confirm("現在のカートを置き換えて保留カートを復元しますか？"))return;cart=JSON.parse(JSON.stringify(h.items||[]));held.splice(index,1);persistHeld();save();renderAll();renderHeld();});
+   const del=document.createElement("button");del.type="button";del.className="secondary";del.textContent="削除";del.addEventListener("click",()=>{held.splice(index,1);persistHeld();renderHeld();});
+   actions.append(restore,del);row.append(info,actions);area.append(row);
+  });
+ }
+ document.getElementById("posHoldCart").addEventListener("click",()=>{
+  if(!cart.length){alert("保留する商品がカートにありません。");return;}
+  if(held.length>=10){alert("保留カートは最大10件です。不要なものを削除してください。");return;}
+  const name=prompt("保留名を入力してください（例：お客様A・レジ待ち）","保留カート "+(held.length+1));
+  if(name===null)return;
+  held.unshift({id:"hold-"+Date.now(),name:name.trim()||"保留カート",savedAt:new Date().toISOString(),items:JSON.parse(JSON.stringify(cart))});
+  persistHeld();cart=[];save();renderAll();renderHeld();
+ });
+ renderChips();renderHeld();
+ if(typeof window.renderProducts==="function")window.renderProducts();
+ document.addEventListener("keydown",e=>{
+  if(e.altKey||e.ctrlKey||e.metaKey)return;
+  const target=e.target;const typing=target&&(target.tagName==="INPUT"||target.tagName==="TEXTAREA"||target.tagName==="SELECT"||target.isContentEditable);
+  if(e.key==="F2"){e.preventDefault();search?.focus();search?.select();}
+  if(e.key==="F3"){e.preventDefault();const barcode=document.querySelector("#barcodeSection input, #barcodeInput, input[placeholder*='バーコード']");barcode?.focus();barcode?.select();}
+  if(e.key==="Escape"&&document.activeElement===search){search.value="";renderProducts();}
+ });
+ const css=".pos-tool-line{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:10px 0}.pos-tool-line strong,.pos-held-head strong{display:block;font-size:12px}.pos-tool-line small,.pos-held-head small{display:block;color:#888;font-size:10px;margin-top:3px}.pos-tool-line button,.pos-held-head button,.pos-held-row button{border:1px solid #ddd;background:#fff;border-radius:9px;padding:8px 11px;font-size:11px;font-weight:700}.pos-tool-line button.active{background:#171717;color:#fff;border-color:#171717}.pos-category-chips{display:flex;gap:6px;flex-wrap:wrap;margin:9px 0}.pos-category-chip{border:1px solid #deded9;background:#fff;border-radius:30px;padding:7px 11px;font-size:11px;color:#444}.pos-category-chip.active{background:#171717;color:#fff;border-color:#171717}.pos-shortcut-hint{border-top:1px solid #eee;padding-top:8px}.pos-product-count{font-size:10px;color:#888;margin:8px 0}.pos-favorite{width:100%;margin-top:6px!important}.pos-favorite[aria-pressed=true]{background:#f2f2ee;border-color:#aaa}.pos-held-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #eee}.pos-held-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #eee}.pos-held-row strong,.pos-held-row small{display:block}.pos-held-row strong{font-size:12px}.pos-held-row small{font-size:10px;color:#888;margin-top:3px}.pos-held-row>div:last-child{display:flex;gap:5px}.pos-held-empty{font-size:11px;color:#999;padding:10px 0}#posHeldCartTools{border:1px solid #e8e8e3;border-radius:12px;padding:0 12px;margin:12px 0;background:#fafaf8}#posHeldCartTools button{cursor:pointer}#productList .product[hidden]{display:none!important}";
+ const style=document.createElement("style");style.textContent=css;document.head.appendChild(style);
+})();
+
 </script>
 </body>
 </html>
