@@ -66,6 +66,11 @@ footer{text-align:center;color:#888;font-size:11px;padding:20px}
 .receipt-stamp{display:inline-block;border:1px solid #aaa;padding:4px 11px;border-radius:3px;font-size:10px;letter-spacing:.12em;margin:10px auto}
 @media print{
  @page{size:80mm auto;margin:0}
+ body.self-kiosk-active>header,body.self-kiosk-active>#qrModeBar{display:none!important}
+ body.self-kiosk-active>main{display:block!important;position:static!important;width:80mm!important;max-width:80mm!important;margin:0!important;padding:0!important}
+ body.self-kiosk-active #selfKiosk{display:none!important}
+ body.self-kiosk-active #receiptSection{display:block!important;visibility:visible!important}
+ #receiptSection.hidden{display:block!important}
  html,body{width:80mm!important;margin:0!important;padding:0!important;background:#fff!important}
  body *{visibility:hidden!important}
  #receiptSection,#receiptSection *{visibility:visible!important}
@@ -438,6 +443,44 @@ body.self-kiosk-active #selfKiosk{display:flex;flex-direction:column}
 #selfKiosk #kioskMethodSelectView{max-width:720px}
 #selfKiosk #kioskPaymentDetailView[hidden],#selfKiosk #kioskMethodSelectView[hidden]{display:none!important}
 
+
+/* V4.2 — cashier usability and receipt/scanner fixes */
+#posWorkspace{background:#fff;border:1px solid #deded9;border-radius:18px;padding:clamp(14px,2vw,22px);box-shadow:0 8px 26px rgba(0,0,0,.045)}
+.pos-workspace-heading{padding:2px 2px 14px;border-bottom:1px solid #ededeb}
+.pos-workspace-heading strong{font-size:21px;letter-spacing:-.4px}
+#posColumns{grid-template-columns:minmax(0,1.18fr) minmax(350px,.82fr);gap:16px}
+#posCatalog,#posCart{border-radius:15px;padding:17px}
+#posCatalog{background:#fff}
+#posCart{background:#f8f8f6;border-color:#deded9;box-shadow:0 8px 24px rgba(0,0,0,.04)}
+#posCatalog #productFilter{height:52px;border-radius:12px;background:#fafaf9}
+#productList{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+#productList .product{border-radius:14px;padding:14px;min-height:148px;transition:border-color .15s,transform .15s}
+#productList .product:focus-within{border-color:#777}
+#productList .product strong{font-size:15px;line-height:1.45}
+#productList .product .price{font-size:21px}
+#productList .product button{border-radius:10px}
+#posCart{top:14px}
+#cartList{max-height:46vh}
+#posCart .total{font-size:27px;padding:8px 0;border-top:1px solid #e4e4e0}
+#posCart .row{gap:8px}
+#posCart .row button{min-height:50px;font-size:14px}
+#posCart .metric{background:#fff;border:1px solid #e8e8e4}
+#posCart #cashTendered{font-size:20px;font-weight:700}
+#receiptSection{border-radius:14px}
+@media(max-width:850px){
+ #posColumns{grid-template-columns:1fr}
+ #posCart{position:static;order:-1}
+ #cartList{max-height:30vh}
+ #productList{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:420px){
+ #productList{grid-template-columns:1fr}
+ .pos-workspace-heading{align-items:flex-start;flex-direction:column}
+}
+@media print{
+ body.self-kiosk-active>main{display:block!important}
+ body.self-kiosk-active #selfKiosk{display:none!important}
+}
 </style>
 </head>
 <body>
@@ -855,7 +898,7 @@ function renderReceipt(record){
  if(receiptSettings.address)addText("div",receiptSettings.address,"receipt-center");
  if(receiptSettings.phone)addText("div","TEL："+receiptSettings.phone,"receipt-center");
  addText("div","TRANSACTION COPY","receipt-sub");
- addText("div",record.paymentMethod==="現金（デモ記録）"?"現金会計 デモ記録":record.paymentMethod==="バーコード（デモ記録）"?"バーコード会計 デモ記録":"QRコード発行控え","receipt-center");
+ addText("div",String(record.paymentMethod||"お会計")+" ／ デモ記録","receipt-center");
  addText("div","DEMO ONLY ・ 実際の決済証明ではありません","receipt-stamp receipt-center");
  addText("div","","receipt-line");
  const meta1=document.createElement("div");meta1.className="receipt-meta";
@@ -868,7 +911,7 @@ function renderReceipt(record){
  meta2.append(m1,m2);area.appendChild(meta2);
  const meta3=document.createElement("div");meta3.className="receipt-meta";
  const m3=document.createElement("span");m3.textContent="ステータス";
- const m4=document.createElement("strong");m4.textContent=record.status==="cancelled"?"取消済み（デモ）":record.paymentMethod==="現金（デモ記録）"?"現金会計（デモ記録）":record.paymentMethod==="バーコード（デモ記録）"?"バーコード会計（デモ記録）":"QR発行済み・決済未確認";
+ const m4=document.createElement("strong");m4.textContent=record.status==="cancelled"?"取消済み（デモ）":"会計記録済み（デモ）";
  meta3.append(m3,m4);area.appendChild(meta3);
  addText("div","","receipt-line");
  const head=document.createElement("div");head.className="receipt-items-head";
@@ -892,7 +935,7 @@ function renderReceipt(record){
  const totalLabel=document.createElement("span");totalLabel.textContent="合計金額";
  const totalValue=document.createElement("strong");totalValue.textContent=yen(record.amount);
  totalRow.append(totalLabel,totalValue);totalWrap.appendChild(totalRow);area.appendChild(totalWrap);
- addText("div",record.paymentMethod==="現金（デモ記録）"?"この控えは現金会計のデモ記録です。":"この控えはQRコード発行の記録です。","receipt-note");
+ addText("div","この控えは店舗端末に保存されたデモ会計記録です。","receipt-note");
  addText("div","実際の決済・現金授受・返金・領収を証明するものではありません。","receipt-note");
  addText("div","","receipt-line");
  addText("div","ご利用ありがとうございます","receipt-center");
@@ -1330,11 +1373,11 @@ renderAll();
   const node=document.getElementById(target);
   if(!node||typeof Html5Qrcode==="undefined"){message(kind==="items"?"kioskScanStatus":"kioskPayStatus","カメラ機能を利用できません。バーコード番号を入力してください。");return;}
   try{
-   scanner=new Html5Qrcode(target,{verbose:false,useBarCodeDetectorIfSupported:true});
+   scanner=new Html5Qrcode(target,{verbose:false,useBarCodeDetectorIfSupported:false});
    const formats=[Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.EAN_8,Html5QrcodeSupportedFormats.UPC_A,Html5QrcodeSupportedFormats.UPC_E,Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.CODE_39,Html5QrcodeSupportedFormats.ITF];
    await scanner.start(
     {facingMode:"environment"},
-    {fps:20,qrbox:(viewfinderWidth,viewfinderHeight)=>({width:Math.max(1,Math.min(viewfinderWidth-24,Math.floor(viewfinderWidth*.92))),height:Math.max(1,Math.min(viewfinderHeight-24,Math.floor(viewfinderHeight*.34)))}),formatsToSupport:formats,disableFlip:true},
+    {fps:20,qrbox:(viewfinderWidth,viewfinderHeight)=>({width:Math.max(1,Math.min(viewfinderWidth-16,Math.floor(viewfinderWidth*.96))),height:Math.max(1,Math.min(viewfinderHeight-16,Math.floor(viewfinderHeight*.52)))}),formatsToSupport:formats,disableFlip:true, videoConstraints:{facingMode:"environment"}},
     async decoded=>{
      const now=Date.now();
      if(decoded===lastCode&&now-lastAt<1800)return;
@@ -1417,7 +1460,7 @@ renderAll();
  document.getElementById("kioskBackItems").onclick=async()=>{await stop();stage="items";screen("kioskProducts");startCamera("selfKioskReader","items");};
  document.getElementById("kioskManualAdd").onclick=()=>{const input=document.getElementById("kioskManualBarcode"),code=input.value.trim(),p=products.find(x=>String(x.barcode||"").trim()===code);if(!p){message("kioskScanStatus","商品が見つかりません。バーコードを確認してください。");return;}addToCart(p.id);input.value="";updateSummary();message("kioskScanStatus","追加しました："+p.name);};
  document.getElementById("kioskNewCustomer").onclick=()=>{stage="welcome";screen("kioskWelcome");};
- document.getElementById("kioskPrintReceipt").onclick=()=>{document.getElementById("receiptSection").classList.remove("hidden");printReceiptById(lastRecord?.requestId);};
+ document.getElementById("kioskPrintReceipt").onclick=()=>{if(!lastRecord){message("kioskCompleteId","レシート情報が見つかりません。");return;}document.getElementById("receiptSection").classList.remove("hidden");renderReceipt(lastRecord);requestAnimationFrame(()=>window.print());};
  document.getElementById("kioskExit").onclick=async()=>{await stop();document.body.classList.remove("self-kiosk-active");document.body.classList.remove("self-mode");document.getElementById("qrStaffMode").click();};
  window.addEventListener("beforeunload",stop);
  window.addEventListener("qrpay:selfmode",()=>enter("welcome"));
