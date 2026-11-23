@@ -364,5 +364,45 @@ function resetDemo(){
 
 render();
 </script>
+ <section style="background:#fff;color:#111;padding:16px;margin:16px 0;border:1px solid #ddd;border-radius:12px;">
+  <h2>決済確認ステータス</h2>
+  <p>QR発行履歴を確認できます。ここでの確認は店舗側の手動記録であり、実際の決済確認ではありません。</p>
+  <div id="paymentStatusList"></div>
+</section>
+
+<script>
+function renderPaymentStatuses() {
+  const history = JSON.parse(
+    localStorage.getItem("qrpay_store_issued") || "[]"
+  );
+
+  const area = document.getElementById("paymentStatusList");
+
+  if (!history.length) {
+    area.textContent = "QR発行履歴はありません。";
+    return;
+  }
+
+  area.innerHTML = "";
+
+  history.forEach((item, index) => {
+    const card = document.createElement("div");
+    card.style.cssText =
+      "padding:12px;margin:10px 0;border:1px solid #ddd;border-radius:8px;";
+
+    const title = document.createElement("strong");
+    title.textContent =
+      "¥" + Number(item.amount || 0).toLocaleString("ja-JP");
+
+    const status = document.createElement("p");
+    status.textContent = "状態：QR発行済み・決済未確認";
+
+    card.append(title, status);
+    area.appendChild(card);
+  });
+}
+
+renderPaymentStatuses();
+</script>
 </body>
 </html>
