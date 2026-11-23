@@ -7,6 +7,7 @@
 <meta name="theme-color" content="#ffffff">
 <title>QR PAY STORE</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 *{box-sizing:border-box}
@@ -86,9 +87,18 @@ footer{text-align:center;color:#888;font-size:11px;padding:20px}
  .receipt-total-wrap{padding:3mm;margin:3mm 0;border-radius:0}
  .receipt-total{font-size:9pt}
  .receipt-total strong{font-size:17pt}
- .receipt-note,.receipt-footer{font-size:7pt;line-height:1.5}
+ .receipt-note,.receipt-footer{font-size:7pt;line-height:1.45}
  .receipt-stamp{font-size:6.5pt;margin:2mm auto}
+ .receipt-row span:first-child{min-width:0;overflow-wrap:anywhere;word-break:break-word}
+ .receipt-row span:nth-child(2),.receipt-row strong{text-align:right;white-space:nowrap}
+ .receipt-items-head,.receipt-row{grid-template-columns:minmax(0,1fr) 10mm 19mm;gap:1.5mm}
+ .receipt-total-wrap{break-inside:avoid}
  .no-print{display:none!important}
+ body.qrpay-print-labels *{visibility:hidden!important}
+ body.qrpay-print-labels #barcodeLabelPrint,body.qrpay-print-labels #barcodeLabelPrint *{visibility:visible!important}
+ body.qrpay-print-labels #barcodeLabelPrint{display:grid!important;position:absolute!important;left:0!important;top:0!important;width:100%!important;margin:0!important;padding:0!important}
+ body.qrpay-print-labels #receiptSection{display:none!important}
+ body.qrpay-print-labels{background:#fff!important}
 }
 /* Standard 80mm thermal receipt layout. Match the printer paper setting to 80mm. */
 
@@ -481,6 +491,19 @@ body.self-kiosk-active #selfKiosk{display:flex;flex-direction:column}
  body.self-kiosk-active>main{display:block!important}
  body.self-kiosk-active #selfKiosk{display:none!important}
 }
+
+#barcodeLabelPrint{display:none}
+#barcodeLabelSection .label-actions>*{flex:1}
+@media print{
+ @page{size:A4 portrait;margin:8mm}
+ body.qrpay-print-labels #barcodeLabelPrint{display:grid!important;grid-template-columns:repeat(3,50mm);grid-auto-rows:30mm;gap:3mm;align-content:start;justify-content:start}
+ .barcode-label{width:50mm;height:30mm;overflow:hidden;border:1px dashed #bbb;padding:1.5mm 2mm;display:flex;flex-direction:column;justify-content:space-between;break-inside:avoid;color:#000;background:#fff;font-family:Arial,sans-serif}
+ .barcode-label-name{font-size:8pt;font-weight:700;line-height:1.15;max-height:7mm;overflow:hidden;overflow-wrap:anywhere}
+ .barcode-label-price{font-size:10pt;font-weight:800;text-align:right;line-height:1}
+ .barcode-label svg{display:block;width:100%;height:13mm;max-height:13mm}
+ .barcode-label-code{font-size:6.5pt;letter-spacing:.4px;text-align:center;line-height:1}
+}
+@media(max-width:700px){#barcodeLabelSection .label-actions{display:flex;flex-direction:column}}
 </style>
 </head>
 <body>
@@ -541,6 +564,7 @@ body.self-kiosk-active #selfKiosk{display:flex;flex-direction:column}
   <input id="productFilter" placeholder="商品名・バーコードで検索" oninput="renderProducts()">
   <div id="productList" class="grid"></div>
 </section>
+<section id="barcodeLabelSection"><h2>商品バーコードラベル</h2><p class="muted">商品ごとのバーコードを発行し、シール用紙に印刷できます。既存のJANコードはそのまま使用します。</p><div class="row label-actions"><button type="button" onclick="issueMissingProductBarcodes()">未発行の商品にコード発行</button><button type="button" class="secondary" onclick="printAllProductLabels()">全商品ラベルを印刷</button></div><p id="barcodeLabelStatus" class="muted" aria-live="polite">商品一覧から個別印刷もできます。</p><div id="barcodeLabelPrint"></div></section>
 
 <section>
   <h2>カート</h2>
@@ -690,15 +714,60 @@ function renderProducts(){
   const add=document.createElement("button");
   add.textContent="カートに追加";
   add.onclick=()=>addToCart(product.id);
+  const label=document.createElement("button");
+  label.className="secondary";
+  label.textContent="バーコードラベル印刷";
+  label.style.marginTop="7px";
+  label.onclick=()=>printProductLabel(product.id);
   const remove=document.createElement("button");
   remove.className="secondary";
   remove.textContent="商品削除";
   remove.style.marginTop="7px";
   remove.onclick=()=>removeProduct(product.id);
-  card.append(name,price,meta,add,remove);
+  card.append(name,price,meta,add,label,remove);
   area.appendChild(card);
  });
 }
+
+function makeInternalProductBarcode(){
+ let code="";
+ do{code="QRP"+String(Math.floor(Math.random()*1e10)).padStart(10,"0");}while(products.some(p=>String(p.barcode||"")===code));
+ return code;
+}
+function ensureProductBarcode(product){
+ if(!product)return "";
+ if(!String(product.barcode||"").trim()){product.barcode=makeInternalProductBarcode();product.barcodeType="QR PAY内部CODE128";save();}
+ return String(product.barcode).trim();
+}
+function buildProductLabel(product){
+ const label=document.createElement("article");label.className="barcode-label";
+ const name=document.createElement("div");name.className="barcode-label-name";name.textContent=product.name||"商品";
+ const price=document.createElement("div");price.className="barcode-label-price";price.textContent=yen(product.price);
+ const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+ const code=document.createElement("div");code.className="barcode-label-code";code.textContent=product.barcode;
+ label.append(name,price,svg,code);
+ JsBarcode(svg,product.barcode,{format:"CODE128",displayValue:false,margin:0,width:1.65,height:42,lineColor:"#000",background:"#fff"});
+ return label;
+}
+function printProductLabels(list){
+ if(!Array.isArray(list)||!list.length){alert("印刷する商品がありません。");return;}
+ if(typeof JsBarcode==="undefined"){alert("バーコード印刷機能を読み込めません。ページを再読み込みしてください。");return;}
+ list.forEach(ensureProductBarcode);save();renderAll();
+ const area=document.getElementById("barcodeLabelPrint");area.innerHTML="";
+ list.forEach(product=>area.appendChild(buildProductLabel(product)));
+ document.body.classList.add("qrpay-print-labels");
+ const cleanup=()=>{document.body.classList.remove("qrpay-print-labels");area.innerHTML="";};
+ window.addEventListener("afterprint",cleanup,{once:true});
+ requestAnimationFrame(()=>window.print());
+}
+function printProductLabel(id){const product=products.find(p=>p.id===id);if(product)printProductLabels([product]);}
+function issueMissingProductBarcodes(){
+ const missing=products.filter(p=>!String(p.barcode||"").trim());
+ if(!missing.length){document.getElementById("barcodeLabelStatus").textContent="すべての商品にバーコードが登録されています。";return;}
+ missing.forEach(ensureProductBarcode);save();renderAll();
+ document.getElementById("barcodeLabelStatus").textContent=missing.length+"商品に専用バーコードを発行しました。";
+}
+function printAllProductLabels(){if(!products.length){alert("先に商品を登録してください。");return;}printProductLabels(products.slice());}
 
 function addProduct(){
  const name=document.getElementById("productName").value.trim();
