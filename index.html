@@ -153,7 +153,8 @@ function showPayment() {
                     throw new Error("このQRコードは有効期限切れです。");
                 }
 
-                result.innerHTML = `
+               window.pendingDemoPayment = data;
+              result.innerHTML = `
                     <h3>読み取り成功</h3>
                     <p>店舗名：<span id="storeName"></span></p>
                     <p>決済金額：<span id="paymentAmount"></span></p>
@@ -169,12 +170,63 @@ function showPayment() {
                 result.textContent = error.message;
             }
         },
-        function(error) {}
-    ).catch(function(error) {
-        document.getElementById("scanResult").textContent =
-            "カメラを起動できませんでした。";
+        
+function confirmDemoPayment() {
+    const data = window.pendingDemoPayment;
+
+    if (!data) {
+        alert("決済情報がありません。");
+        return;
+    }
+
+    const balance = Number(
+        localStorage.getItem("qrpay_demo_balance") ?? 10000
+    );
+
+    const history = JSON.parse(
+        localStorage.getItem("qrpay_demo_history") || "[]"
+    );
+
+    if (history.some(item => item.requestId === data.requestId)) {
+        alert("このQRコードは使用済みです。");
+        return;
+    }
+
+    if (balance < data.amount) {
+        alert("デモ残高が不足しています。");
+        return;
+    }
+
+    if (!confirm("デモ決済を完了しますか？\n実際のお金は動きません。")) {
+        return;
+    }
+
+    const newBalance = balance - data.amount;
+
+    history.unshift({
+        requestId: data.requestId,
+        store: data.store,
+        amount: data.amount,
+        date: new Date().toLocaleString("ja-JP")
     });
+
+    localStorage.setItem("qrpay_demo_balance", newBalance);
+    localStorage.setItem("qrpay_demo_history", JSON.stringify(history));
+
+    document.getElementById("balance").textContent =
+        "¥" + newBalance.toLocaleString("ja-JP");
+
+    document.getElementById("scanResult").innerHTML = `
+        <h3>デモ決済完了</h3>
+        <p>店舗：${data.store}</p>
+        <p>決済金額：¥${data.amount.toLocaleString("ja-JP")}</p>
+        <p>残高：¥${newBalance.toLocaleString("ja-JP")}</p>
+        <p>取引履歴に保存しました。</p>
+    `;
+
+    window.pendingDemoPayment = null;
 }
+
 
 
 function confirmDemoPayment() {
