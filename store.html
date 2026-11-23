@@ -148,8 +148,10 @@ footer{color:#999;padding:24px}
   <h2>商品登録</h2>
   <label>商品名</label><input id="productName" placeholder="例：ジュース">
   <label>価格（円）</label><input id="productPrice" type="number" min="1" max="100000" placeholder="例：150">
-  <label>バーコード番号（任意）</label><input id="productBarcode" inputmode="numeric" placeholder="JANコードなど">
+  <label>バーコード番号（任意）</label>
+  <div class="row"><input id="productBarcode" inputmode="numeric" placeholder="JANコードなど"><button type="button" class="secondary" onclick="startBarcodeRegistration()">カメラで読み取る</button></div>
   <button onclick="addProduct()">商品を登録</button>
+  <p class="muted">先にバーコードを読み取り、商品名と価格を入力して登録できます。</p>
 </section>
 <section>
   <h2>バーコード読み取り</h2>
@@ -222,6 +224,7 @@ const KEYS={
 };
 let receiptSettings=load(KEYS.settings,{name:"DEMO STORE",address:"",phone:"",logo:""});
 let barcodeScanner=null;
+let barcodeScanMode="lookup";
 
 const defaults=[
  {id:"p1",name:"コーヒー",price:350},
@@ -623,16 +626,34 @@ function lookupBarcode(code){
  document.getElementById("barcodeSearch").value="";
  message.textContent=product.name+" をカートに追加しました。";
 }
+function startBarcodeRegistration(){
+ barcodeScanMode="register";
+ startBarcodeCamera();
+}
 async function startBarcodeScanner(){
- if(typeof Html5Qrcode==="undefined"){document.getElementById("barcodeMessage").textContent="スキャナーを読み込めません。番号を手入力してください。";return;}
+ barcodeScanMode="lookup";
+ startBarcodeCamera();
+}
+async function startBarcodeCamera(){
+ const message=document.getElementById("barcodeMessage");
+ if(typeof Html5Qrcode==="undefined"){message.textContent="スキャナーを読み込めません。番号を手入力してください。";return;}
  try{
   if(!barcodeScanner)barcodeScanner=new Html5Qrcode("barcode-reader");
+  if(barcodeScanner.isScanning)await barcodeScanner.stop();
   const formats=[Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.EAN_8,Html5QrcodeSupportedFormats.UPC_A,Html5QrcodeSupportedFormats.UPC_E,Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.CODE_39,Html5QrcodeSupportedFormats.ITF];
+  const mode=barcodeScanMode;
   await barcodeScanner.start({facingMode:"environment"},{fps:10,qrbox:{width:280,height:120},formatsToSupport:formats},decoded=>{
-   document.getElementById("barcodeSearch").value=decoded;lookupBarcode(decoded);stopBarcodeScanner();
+   if(mode==="register"){
+    document.getElementById("productBarcode").value=decoded;
+    message.textContent="読み取り成功："+decoded+"。商品名と価格を入力して「商品を登録」を押してください。";
+   }else{
+    document.getElementById("barcodeSearch").value=decoded;
+    lookupBarcode(decoded);
+   }
+   stopBarcodeScanner();
   },()=>{});
-  document.getElementById("barcodeMessage").textContent="バーコードをカメラに映してください。";
- }catch(e){document.getElementById("barcodeMessage").textContent="カメラを開始できません。許可設定または手入力を確認してください。";}
+  message.textContent=mode==="register"?"登録する商品のバーコードをカメラに映してください。":"登録済み商品のバーコードをカメラに映してください。";
+ }catch(e){message.textContent="カメラを開始できません。許可設定または番号の手入力を確認してください。";}
 }
 async function stopBarcodeScanner(){
  if(barcodeScanner){try{if(barcodeScanner.isScanning)await barcodeScanner.stop();}catch(e){}}
