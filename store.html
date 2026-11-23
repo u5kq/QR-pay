@@ -199,7 +199,7 @@ a{color:#111!important}
 <section>
   <h2>商品登録</h2>
   <label>商品名</label><input id="productName" placeholder="例：ジュース">
-  <label>価格（円）</label><input id="productPrice" type="number" min="1" max="100000" placeholder="例：150">
+  <label>価格（円）</label><input id="productPrice" type="number" min="1" max="100000" placeholder="例：150"><label>カテゴリ（任意）</label><input id="productCategory" placeholder="飲料・食品など"><label>在庫数（空欄なら管理なし）</label><input id="productStock" type="number" min="0" max="99999" placeholder="例：20">
   <label>バーコード番号（任意）</label>
   <div class="row"><input id="productBarcode" inputmode="numeric" placeholder="JANコードなど"><button type="button" class="secondary" onclick="startBarcodeRegistration()">カメラで読み取る</button></div>
   <button onclick="addProduct()">商品を登録</button>
@@ -253,7 +253,7 @@ a{color:#111!important}
 </section>
 
 <section>
-  <h2>QR発行履歴・決済確認</h2>
+  <h2>取引管理・検索</h2><div class="grid"><div class="metric"><small>デモ会計件数</small><strong id="demoSalesCount">0</strong></div><div class="metric"><small>デモ会計合計</small><strong id="demoSalesTotal">¥0</strong></div></div><input id="historyFilter" placeholder="取引番号・日付・会計方法で検索" oninput="renderHistory()">
   <p class="muted">ここに表示される履歴は、このブラウザでのQR発行記録です。</p>
   <div id="historyList"></div>
 </section>
@@ -348,6 +348,7 @@ function renderProducts(){
   const price=document.createElement("div");
   price.className="price";
   price.textContent=yen(product.price);
+  const meta=document.createElement("small");meta.className="muted";meta.textContent=(product.category||"カテゴリ未設定")+" ／ "+(Number.isInteger(product.stock)?"在庫 "+product.stock+" 個":"在庫管理なし");
   if(product.barcode){
    const code=document.createElement("div");
    code.className="muted";
@@ -362,7 +363,7 @@ function renderProducts(){
   remove.textContent="商品削除";
   remove.style.marginTop="7px";
   remove.onclick=()=>removeProduct(product.id);
-  card.append(name,price,add,remove);
+  card.append(name,price,meta,add,remove);
   area.appendChild(card);
  });
 }
@@ -378,7 +379,7 @@ function addProduct(){
  if(barcode && products.some(p=>String(p.barcode||"")===barcode)){
   alert("このバーコード番号はすでに登録されています。");return;
  }
- products.push({id:crypto.randomUUID(),name,price,barcode});
+ const category=document.getElementById("productCategory").value.trim(); const stockText=document.getElementById("productStock").value; const stock=stockText===""?null:Number(stockText); if(stock!==null&&(!Number.isInteger(stock)||stock<0||stock>99999)){alert("在庫数は0〜99,999の整数で入力してください。");return;} products.push({id:crypto.randomUUID(),name,price,barcode,category,stock});
  document.getElementById("productName").value="";
  document.getElementById("productPrice").value="";
  document.getElementById("productBarcode").value="";
@@ -396,6 +397,7 @@ function addToCart(id){
  const product=products.find(p=>p.id===id);
  if(!product)return;
  const item=cart.find(x=>x.id===id);
+ if(Number.isInteger(product.stock)&&((item?.qty||0)+1)>product.stock){alert("在庫数を超える数量は追加できません。");return;}
  if(item)item.qty++;
  else cart.push({...product,qty:1});
  save();renderAll();
@@ -519,12 +521,15 @@ function issueQR(){
  save();renderAll();
 }
 
+function applyDemoInventory(record){
+ (record.items||[]).forEach(line=>{const p=products.find(x=>x.id===line.id);if(p&&Number.isInteger(p.stock))p.stock=Math.max(0,p.stock-Number(line.qty||0));});
+}
 function checkoutCash(){
  const amount=total();
  if(!amount||amount>100000){alert("合計金額を確認してください。");return;}
  if(!confirm("現金でのデモ会計として記録し、レシートを作成しますか？\\n実際の現金授受・決済は行いません。"))return;
- const record={requestId:"CASH-"+crypto.randomUUID(),amount,store:receiptSettings.name||"DEMO STORE",date:new Date().toISOString(),status:"cash-demo",paymentMethod:"現金（デモ記録）",items:cart.map(item=>({name:item.name,price:item.price,qty:item.qty}))};
- issued.unshift(record);cart=[];save();renderAll();
+ const record={requestId:"CASH-"+crypto.randomUUID(),amount,store:receiptSettings.name||"DEMO STORE",date:new Date().toISOString(),status:"cash-demo",paymentMethod:"現金（デモ記録）",items:cart.map(item=>({id:item.id,name:item.name,price:item.price,qty:item.qty}))};
+ applyDemoInventory(record);issued.unshift(record);cart=[];save();renderAll();
  renderReceipt(record);document.getElementById("receiptSection").classList.remove("hidden");
 }
 function closeQR(){
@@ -635,8 +640,10 @@ function renderHistory(){
   receiptButton.textContent="控えを表示・印刷";
   receiptButton.style.marginTop="8px";
   receiptButton.onclick=()=>printReceiptById(item.requestId);
-  row.append(title,date,status,cancelButton,receiptButton);
-  area.appendChild(row);
+  const method=document.createElement("p");method.className="muted";method.textContent=item.paymentMethod||"QR発行";
+  row.append(title,date,method,status,cancelButton,receiptButton);
+  const q=(document.getElementById("historyFilter")?.value||"").toLowerCase();
+  if(!q||[item.requestId,item.date,item.paymentMethod,item.store].join(" ").toLowerCase().includes(q))area.appendChild(row);
  });
 }
 
@@ -650,6 +657,9 @@ function cancelIssuedQR(requestId){
 }
 
 function renderDashboard(){
+ const sales=issued.filter(item=>["cash-demo","barcode-demo"].includes(item.status));
+ document.getElementById("demoSalesCount").textContent=sales.length+"件";
+ document.getElementById("demoSalesTotal").textContent=yen(sales.reduce((sum,item)=>sum+Number(item.amount||0),0));
  const active=issued.filter(item=>item.status!=="cancelled");
  const amount=active.reduce((sum,item)=>sum+Number(item.amount||0),0);
  document.getElementById("totalIssued").textContent=yen(amount);
@@ -697,8 +707,8 @@ function checkoutBarcodeDemo(rawCode){
  if(!amount||amount>100000){message.textContent="先に商品をカートへ追加し、合計金額を確認してください。";return;}
  if(!confirm("QR PAYのデモ支払いバーコードを読み取りました。\n合計："+yen(amount)+"\nこの店舗端末にデモ取引として記録しますか？\n※USER側の残高とは連動せず、実際の決済は行いません。"))return;
  localStorage.setItem("qrpay_store_used_customer_codes",JSON.stringify([...used,token].slice(-500)));
- const record={requestId:"BARCODE-"+token.slice(0,12),amount,store:receiptSettings.name||"DEMO STORE",date:new Date().toISOString(),status:"barcode-demo",paymentMethod:"バーコード（デモ記録）",items:cart.map(item=>({name:item.name,price:item.price,qty:item.qty}))};
- issued.unshift(record);cart=[];save();renderAll();
+ const record={requestId:"BARCODE-"+token.slice(0,12),amount,store:receiptSettings.name||"DEMO STORE",date:new Date().toISOString(),status:"barcode-demo",paymentMethod:"バーコード（デモ記録）",items:cart.map(item=>({id:item.id,name:item.name,price:item.price,qty:item.qty}))};
+ applyDemoInventory(record);issued.unshift(record);cart=[];save();renderAll();
  renderReceipt(record);document.getElementById("receiptSection").classList.remove("hidden");
  message.textContent="バーコードを読み取り、店舗側のデモ取引控えを作成しました。";
 }
@@ -710,7 +720,7 @@ async function startBarcodeScanner(){
  barcodeScanMode="lookup";
  startBarcodeCamera();
 }
-async async function startBarcodeCamera(){
+async function startBarcodeCamera(){
  const message=document.getElementById("barcodeMessage");
  if(typeof Html5Qrcode==="undefined"){message.textContent="スキャナーを読み込めません。番号を手入力してください。";return;}
  try{
