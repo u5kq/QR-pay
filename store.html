@@ -511,6 +511,7 @@ body.self-kiosk-active #selfKiosk{display:flex;flex-direction:column}
 <header>
   <h1>QR PAY STORE</h1>
   <p>DEMO POS SYSTEM / 店舗管理</p>
+  <p style="margin-top:12px;padding:10px 12px;border:1px solid #ffffff55;border-radius:9px;color:#fff;font-size:12px;line-height:1.7">デモ専用画面です。実際の決済・送金・売上確定・店舗間通信は行いません。実在する顧客情報や決済情報を入力しないでください。</p>
 </header>
 
 <main>
@@ -762,7 +763,8 @@ function printProductLabels(list){
   const labels=pages.join('');
   const html='<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>商品バーコードラベル</title><style>'+
   '@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#000;font-family:Arial,sans-serif}.sheet{width:186mm;height:268mm;display:grid;grid-template-columns:repeat(4,45mm);grid-template-rows:repeat(10,25mm);gap:2mm;align-content:start;justify-content:center;margin:0 auto;break-after:page;page-break-after:always}.sheet:last-of-type{break-after:auto;page-break-after:auto}.barcode-label{width:45mm;height:25mm;overflow:hidden;border:1px dashed #bbb;padding:1mm 1.5mm;display:flex;flex-direction:column;justify-content:space-between;break-inside:avoid;page-break-inside:avoid;color:#000;background:#fff}.barcode-label-name{font-size:7pt;font-weight:700;line-height:1.1;max-height:5mm;overflow:hidden;overflow-wrap:anywhere}.barcode-label-price{font-size:8.5pt;font-weight:800;text-align:right;line-height:1}.barcode-label svg{display:block;width:100%;height:10mm;max-height:10mm}.barcode-label-code{font-size:5.5pt;letter-spacing:.3px;text-align:center;line-height:1}.actions{padding:12px;text-align:center;font:14px sans-serif}@media print{.actions{display:none}.sheet{margin:0 auto}}'+
-  '</style></head><body><div class="actions">A4・45×25mmラベル／1ページ最大40枚・合計 '+list.length+'枚分 — 印刷設定で「実際のサイズ／倍率100%」を選択してください。 <button onclick="window.print()">印刷する</button></div><main class="sheet">'+labels+'</main><script>window.addEventListener("load",()=>setTimeout(()=>window.print(),350));<\/script><div class="folio-policy-entry"><a href="https://u5kq.github.io/folio.jp/policy.html#qrpay" target="_blank" rel="noopener noreferrer">folio 利用ポリシー・プライバシー ↗</a></div></body></html>';
+  '</style></head><body><div class="actions">A4・45×25mmラベル／1ページ最大40枚・合計 '+list.length+'枚分 — 印刷設定で「実際のサイズ／倍率100%」を選択してください。 <button onclick="window.print()">印刷する</button></div><main class="sheet">'+labels+'</main><script>window.addEventListener("load",()=>setTimeout(()=>window.print(),350));<\/script><div class="folio-policy-entry"><a href="https://u5kq.github.io/folio.jp/policy.html#qrpay" target="_blank" rel="noopener noreferrer">folio 利用ポリシー・プライバシー ↗</a></div><footer style="text-align:center;padding:22px 16px 34px;color:#777;font-size:11px;line-height:1.8"><p>QR PAY STORE — DEMO ONLY</p><a href="https://u5kq.github.io/folio.jp/policy.html#qrpay" target="_blank" rel="noopener noreferrer" style="color:inherit;text-underline-offset:3px">folio 利用ポリシー・プライバシー ↗</a></footer>
+</body></html>';
   printWindow.document.open();printWindow.document.write(html);printWindow.document.close();
  }catch(error){printWindow.close();alert("ラベルの印刷画面を作成できませんでした。商品情報を確認してください。");}
 }
