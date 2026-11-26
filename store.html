@@ -3,7 +3,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <title>QR PAY STORE</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -870,6 +870,17 @@ footer{padding:26px 16px!important}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}}
 </style>
 
+
+<style id="folio-device-optimization">
+/* QR PAY STORE DEVICE OPTIMIZATION — 2026 */
+html{min-height:100%;scroll-padding-top:12px}
+body{overflow-x:clip}
+button,input,select,textarea{touch-action:manipulation}
+@media (pointer:coarse){button{min-height:44px}input,select,textarea{min-height:48px;font-size:16px}}
+@media (min-width:760px) and (max-width:1180px){main{max-width:1120px;padding:22px 24px}section{padding:22px;border-radius:16px}.grid{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}}
+@media (max-width:600px){main{padding:14px 12px 28px}section{padding:16px}}
+
+</style>
 </body></html>';
   printWindow.document.open();printWindow.document.write(html);printWindow.document.close();
  }catch(error){printWindow.close();alert("ラベルの印刷画面を作成できませんでした。商品情報を確認してください。");}
